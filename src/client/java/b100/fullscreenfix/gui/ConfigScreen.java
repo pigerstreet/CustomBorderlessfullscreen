@@ -60,8 +60,9 @@ public class ConfigScreen extends GuiScrollListScreen {
 			fullscreenResolutionButton = scrollList.add(new CustomOptionElement<>(this, "option.fullscreenResolution", FullscreenFix.getFullscreenVideoMode())
 			.addActionListener((e) -> utils.setScreen(new ScreenResolutionsMenu(this)))
 			.setToTextFunction((videoMode) -> videoMode != null ? Text.of(videoMode.toString()) : FullscreenFix.translate("value.fullscreenResolution.default")));
-
+			
 			scrollList.add(new BooleanToggleElement(this, "option.replaceVideoSettings", FullscreenFix.shouldReplaceVideoSettingsButton()).addSaveConsumer(newValue -> FullscreenFix.setReplaceVideoSettingsButton(newValue)));
+			scrollList.add(new BooleanToggleElement(this, "option.configScreenHotkeyEnabled", FullscreenFix.isConfigScreenHotkeyEnabled()).addSaveConsumer(newValue -> FullscreenFix.setConfigScreenHotkeyEnabled(newValue)));
 		}
 	}
 	

@@ -11,9 +11,12 @@ import java.util.function.Function;
 
 import com.mojang.serialization.Codec;
 
+import b100.fullscreenfix.gui.ConfigScreen;
+import b100.fullscreenfix.mixin.access.IScreen;
 import b100.fullscreenfix.mixin.access.WindowAccess;
 import b100.fullscreenfix.util.ConfigUtil;
 import b100.fullscreenfix.util.GLFWUtil;
+import b100.gui.GuiUtils;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -44,6 +47,7 @@ public class FullscreenFix {
 	private static boolean startInFullscreen = true;
 	private static boolean replaceVideoSettingsButton = true;
 	private static boolean captureCursorInFullscreen = false;
+	private static boolean configScreenHotkeyEnabled = true;
 	
 	/**
 	 * May be null for current resolution
@@ -59,6 +63,14 @@ public class FullscreenFix {
 	
 	static {
 		loadConfig();
+	}
+
+	@SuppressWarnings("resource")
+	public static void openConfigScreen() {
+		IScreen currentScreen = (IScreen) MinecraftClient.getInstance().currentScreen;
+		if(!(currentScreen instanceof ConfigScreen)) {
+			GuiUtils.instance.setScreen(new ConfigScreen(null));	
+		}
 	}
 	
 	////////////////////////////////////
@@ -156,6 +168,14 @@ public class FullscreenFix {
 	
 	public static boolean isCaptureCursorInFullscreenEnabled() {
 		return captureCursorInFullscreen;
+	}
+	
+	public static void setConfigScreenHotkeyEnabled(boolean value) {
+		configScreenHotkeyEnabled = value;
+	}
+	
+	public static boolean isConfigScreenHotkeyEnabled() {
+		return configScreenHotkeyEnabled;
 	}
 	
 	////////////////////////////////////
@@ -262,6 +282,7 @@ public class FullscreenFix {
 			str.append("fullscreenMode:" + fullscreenVideoMode.toConfigString() + "\n");	
 		}
 		str.append("replaceVideoSettingsButton:" + replaceVideoSettingsButton + "\n");
+		str.append("configScreenHotkeyEnabled:" + configScreenHotkeyEnabled + "\n");
 		
 		ConfigUtil.saveStringToFile(str.toString(), CONFIG_FILE);
 	}
@@ -281,6 +302,8 @@ public class FullscreenFix {
 			replaceVideoSettingsButton = value.equalsIgnoreCase("true");
 		}else if(key.equals("captureCursorInFullscreen")) {
 			captureCursorInFullscreen = value.equalsIgnoreCase("true");
+		}else if(key.equals("configScreenHotkeyEnabled")) {
+			configScreenHotkeyEnabled = value.equalsIgnoreCase("true");
 		}
 	}
 	

@@ -22,6 +22,8 @@ option.replaceVideoSettings=Replace Fullscreen Button
 option.replaceVideoSettings.tooltip=Changes the fullscreen button in the video settings menu to contain a borderless option
 option.captureCursorInFullscreen=Capture Cursor
 option.captureCursorInFullscreen.tooltip=Captures the cursor and prevents it from being moved onto another monitor when in fullscreen
+option.configScreenHotkeyEnabled=Config Screen Hotkey
+option.configScreenHotkeyEnabled.tooltip=When enabled, the config screen can be opened by pressing CTRL and the fullscreen key. The config screen can also be opened with the "Mod Menu" mod
 
 value.fullscreenResolution.default=Default
 value.yes=Yes
