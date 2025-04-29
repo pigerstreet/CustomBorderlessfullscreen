@@ -8,7 +8,9 @@ import java.util.List;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVidMode;
 
+import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.MonitorInfo;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.VideoMode;
 import net.minecraft.client.util.Window;
 
@@ -75,6 +77,47 @@ public class GLFWUtil {
 			}
 		}
 		return null;
+	}
+	
+	public static int getUpdatedCursorMode(int mode) {
+		if(mode == GLFW_CURSOR_NORMAL || mode == GLFW_CURSOR_CAPTURED) {
+			boolean isCaptured = mode == GLFW_CURSOR_CAPTURED;
+			boolean shouldBeCaptured = FullscreenFix.isCaptureCursorInFullscreenEnabled() && FullscreenFix.isFullscreenEnabled();
+			if(isCaptured != shouldBeCaptured) {
+				if(shouldBeCaptured) {
+					mode = GLFW_CURSOR_CAPTURED;
+				}else {
+					mode = GLFW_CURSOR_NORMAL;
+				}
+			}
+		}
+		return mode;
+	}
+	
+	public static void updateCursorMode() {
+		long windowHandle = MinecraftClient.getInstance().getWindow().getHandle();
+		
+		int cursorMode = glfwGetInputMode(windowHandle, GLFW_CURSOR);
+		final int prevCursorMode = cursorMode;
+		cursorMode = getUpdatedCursorMode(cursorMode);
+		
+		if(cursorMode != prevCursorMode) {
+			FullscreenFix.debugPrint("Updated Cursor Mode: " + GLFWUtil.getCursorModeString(prevCursorMode) + " -> " + GLFWUtil.getCursorModeString(cursorMode));	
+			glfwSetInputMode(windowHandle, GLFW_CURSOR, cursorMode);
+		}
+	}
+	
+	public static String getCursorModeString(int cursorMode) {
+		if(cursorMode == GLFW_CURSOR_CAPTURED) {
+			return "CAPTURED";
+		}else if(cursorMode == GLFW_CURSOR_NORMAL) {
+			return "NORMAL";
+		}else if(cursorMode == GLFW_CURSOR_HIDDEN) {
+			return "HIDDEN";
+		}else if(cursorMode == GLFW_CURSOR_DISABLED) {
+			return "DISABLED";
+		}
+		return String.valueOf(cursorMode);
 	}
 
 }

@@ -112,6 +112,8 @@ public class Win32Util {
 			MonitorInfo monitor = MonitorInfo.getMonitor(window);
 			GLFWUtil.enableFullscreen(window, monitor);
 		}
+		
+		GLFWUtil.updateCursorMode();
 	}
 	
 	public static void setDefaultWindowStyle(Window window, long hwnd) {

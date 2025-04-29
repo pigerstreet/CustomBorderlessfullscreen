@@ -6,6 +6,7 @@
 	"client": [
 		"access.IScreen",
 		"access.WindowAccess",
+		"InputUtilMixin",
 		"LanguageManagerMixin",
 		"VideoOptionsScreenMixin",
 		"WindowMixin"

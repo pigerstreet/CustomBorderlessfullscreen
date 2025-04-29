@@ -20,6 +20,8 @@ option.startInFullscreen=Start in Fullscreen
 option.startInFullscreen.tooltip=When disabled, the game will always start in windowed mode
 option.replaceVideoSettings=Replace Fullscreen Button
 option.replaceVideoSettings.tooltip=Changes the fullscreen button in the video settings menu to contain a borderless option
+option.captureCursorInFullscreen=Capture Cursor
+option.captureCursorInFullscreen.tooltip=Captures the cursor and prevents it from being moved onto another monitor when in fullscreen
 
 value.fullscreenResolution.default=Default
 value.yes=Yes

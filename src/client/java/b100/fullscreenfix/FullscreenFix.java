@@ -13,6 +13,7 @@ import com.mojang.serialization.Codec;
 
 import b100.fullscreenfix.mixin.access.WindowAccess;
 import b100.fullscreenfix.util.ConfigUtil;
+import b100.fullscreenfix.util.GLFWUtil;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -42,6 +43,7 @@ public class FullscreenFix {
 	private static boolean autoMinimize = true;
 	private static boolean startInFullscreen = true;
 	private static boolean replaceVideoSettingsButton = true;
+	private static boolean captureCursorInFullscreen = false;
 	
 	/**
 	 * May be null for current resolution
@@ -146,6 +148,16 @@ public class FullscreenFix {
 		return replaceVideoSettingsButton;
 	}
 	
+	public static void setCaptureCursorInFullscreen(boolean value) {
+		captureCursorInFullscreen = value;
+		
+		GLFWUtil.updateCursorMode();
+	}
+	
+	public static boolean isCaptureCursorInFullscreenEnabled() {
+		return captureCursorInFullscreen;
+	}
+	
 	////////////////////////////////////
 	
 	public static void updateWindow() {
@@ -243,6 +255,7 @@ public class FullscreenFix {
 		str.append("enableMod:" + enableModNextLaunch + "\n");
 		str.append("borderlessFullscreen:" + borderlessFullscreen + "\n");
 		str.append("fullscreenOptimizations:" + fullscreenOptimizations + "\n");
+		str.append("captureCursorInFullscreen:" + captureCursorInFullscreen + "\n");
 		str.append("autoMinimize:" + autoMinimize + "\n");
 		str.append("startInFullscreen:" + startInFullscreen + "\n");
 		if(fullscreenVideoMode != null) {
@@ -266,6 +279,8 @@ public class FullscreenFix {
 			fullscreenVideoMode = VideoMode.parse(value);
 		}else if(key.equals("replaceVideoSettingsButton")) {
 			replaceVideoSettingsButton = value.equalsIgnoreCase("true");
+		}else if(key.equals("captureCursorInFullscreen")) {
+			captureCursorInFullscreen = value.equalsIgnoreCase("true");
 		}
 	}
 	

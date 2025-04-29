@@ -215,6 +215,7 @@ public abstract class WindowMixin {
 		glfwShowWindow(handle);
 		
 		FullscreenFix.windowNeedsUpdate = false;
+		GLFWUtil.updateCursorMode();
 	}
 	
 	@Inject(method = "setFullscreenVideoMode", at = @At("HEAD"), cancellable = true)

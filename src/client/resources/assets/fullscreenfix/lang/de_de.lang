@@ -20,6 +20,8 @@ option.startInFullscreen=Im Vollbildmodus starten
 option.startInFullscreen.tooltip=Wenn deaktiviert startet das Spiel nicht im Vollbildmodus.
 option.replaceVideoSettings=Vollbild-Schaltfläche ersetzen
 option.replaceVideoSettings.tooltip=Ersetzt die Vollbild-Schaltfläche in den Grafikeinstellungen mit einer eigenen, die eine Randlos-Option enthält
+option.captureCursorInFullscreen=Mauszeiger einfangen
+option.captureCursorInFullscreen.tooltip=Fängt den Mauszeiger im Spielfenster ein und verhindert, dass er im Vollbildmodus auf einen anderen Bildschirm bewegt wird
 
 value.fullscreenResolution.default=Standard
 value.yes=Ja
