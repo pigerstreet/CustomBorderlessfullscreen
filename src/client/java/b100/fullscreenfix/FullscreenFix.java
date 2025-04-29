@@ -339,11 +339,12 @@ public class FullscreenFix {
 				if(resource.isPresent()) {
 					stream = resource.get().getInputStream();
 				}
-			}else {
-				stream = FullscreenFix.class.getResourceAsStream("/assets/" + Global.MODID + "/lang/" + name + ".lang");
 			}
 			if(stream == null) {
-				return;
+				stream = FullscreenFix.class.getResourceAsStream("/assets/" + Global.MODID + "/lang/" + name + ".lang");
+				if(stream == null) {
+					return;
+				}
 			}
 			ConfigUtil.loadConfig(stream, (key, value) -> translations.put(key, value), '=');	
 		}catch (Exception e) {
