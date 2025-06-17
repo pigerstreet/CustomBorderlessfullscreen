@@ -87,6 +87,14 @@ public abstract class GuiScreen extends GuiContainer implements IScreen, FocusLi
 		return false;
 	}
 	
+	public void drawWrappedTooltip(Text tooltip) {
+		drawWrappedTooltip(tooltip, GuiUtils.DEFAULT_TOOLTIP_WIDTH);
+	}
+	
+	public void drawWrappedTooltip(Text tooltip, int width) {
+		wrapper.setTooltip(utils.textRenderer.wrapLines(tooltip, width));
+	}
+	
 	public boolean focusNextElement(FocusDirection direction) {
 		Focusable next = getNextScreenFocusableElement(focusedElement, direction);
 		if(next != null) {
@@ -179,10 +187,6 @@ public abstract class GuiScreen extends GuiContainer implements IScreen, FocusLi
 	
 	public void onScreenOpened() {
 		screenListeners.forEach((listener) -> listener.onScreenOpened(this));
-	}
-	
-	public void setTooltip(Text tooltip) {
-		wrapper.setTooltip(tooltip);
 	}
 
 }

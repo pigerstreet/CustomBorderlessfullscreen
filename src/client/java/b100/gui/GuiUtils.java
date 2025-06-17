@@ -1,7 +1,5 @@
 package b100.gui;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-
 import b100.fullscreenfix.mixin.access.IScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -14,6 +12,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public class GuiUtils {
+	
+	public static final int DEFAULT_TOOLTIP_WIDTH = 170;
 	
 	public static GuiUtils instance = new GuiUtils();
 	
@@ -38,8 +38,6 @@ public class GuiUtils {
 	
 	public void drawString(String string, int x, int y, int color, boolean shadow) {
 		drawContext.drawText(textRenderer, string, x, y, color, shadow);
-		RenderSystem.enableBlend();
-		RenderSystem.disableDepthTest();
 	}
 	
 	public void drawString(Text text, int x, int y, int color, boolean shadow) {
@@ -53,6 +51,10 @@ public class GuiUtils {
 	
 	public void drawGuiTexture(Identifier texture, int x, int y, int width, int height) {
 		drawContext.drawGuiTexture(texture, x, y, width, height);
+	}
+	
+	public void drawTexture(Identifier texture, int x, int y, float u, float v, int width, int height, int textureWidth, int textureHeight) {
+		drawContext.drawTexture(texture, x, y, u, v, width, height, textureWidth, textureHeight);
 	}
 	
 	public void drawRectangle(int x, int y, int w, int h, int color) {
