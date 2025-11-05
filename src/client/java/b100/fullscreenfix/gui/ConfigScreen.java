@@ -3,15 +3,16 @@ package b100.fullscreenfix.gui;
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.Global;
 import b100.fullscreenfix.VideoMode;
-import b100.fullscreenfix.mixin.access.IScreen;
-import b100.gui.GuiButton;
-import b100.gui.GuiContainer;
-import b100.gui.GuiElement;
-import b100.gui.GuiScrollListScreen;
-import b100.gui.config.BooleanToggleElement;
-import b100.gui.config.ConfigElement;
-import b100.gui.config.CustomOptionElement;
-import b100.gui.config.SaveConfigButton;
+import b100.lib.client.gui.GuiButton;
+import b100.lib.client.gui.GuiContainer;
+import b100.lib.client.gui.GuiElement;
+import b100.lib.client.gui.GuiScrollListScreen;
+import b100.lib.client.gui.config.BooleanToggleElement;
+import b100.lib.client.gui.config.ConfigElement;
+import b100.lib.client.gui.config.CustomOptionElement;
+import b100.lib.client.gui.config.SaveConfigButton;
+import b100.lib.client.mixin.IScreen;
+import b100.lib.client.translate.Translate;
 import net.minecraft.text.Text;
 
 public class ConfigScreen extends GuiScrollListScreen {
@@ -24,7 +25,7 @@ public class ConfigScreen extends GuiScrollListScreen {
 	public ConfigScreen(IScreen parentScreen) {
 		super(parentScreen);
 		
-		title = FullscreenFix.translate("screen.fullscreenSettings.title");
+		title = Translate.translate("screen.fullscreenSettings.title");
 	}
 	
 	@Override
@@ -37,7 +38,7 @@ public class ConfigScreen extends GuiScrollListScreen {
 		
 		super.onInit();
 		
-		cancelButton = add(new GuiButton(this, FullscreenFix.translate("button.cancel")).addActionListener((e) -> back()));
+		cancelButton = add(new GuiButton(this, Translate.translate("button.cancel")).addActionListener((e) -> back()));
 		add(saveConfigButton);
 	}
 	
@@ -59,7 +60,7 @@ public class ConfigScreen extends GuiScrollListScreen {
 			
 			fullscreenResolutionButton = scrollList.add(new CustomOptionElement<>(this, "option.fullscreenResolution", FullscreenFix.getFullscreenVideoMode())
 			.addActionListener((e) -> utils.setScreen(new ScreenResolutionsMenu(this)))
-			.setToTextFunction((videoMode) -> videoMode != null ? Text.of(videoMode.toString()) : FullscreenFix.translate("value.fullscreenResolution.default")));
+			.setToTextFunction((videoMode) -> videoMode != null ? Text.of(videoMode.toString()) : Translate.translate("value.fullscreenResolution.default")));
 			
 			scrollList.add(new BooleanToggleElement(this, "option.replaceVideoSettings", FullscreenFix.shouldReplaceVideoSettingsButton()).addSaveConsumer(newValue -> FullscreenFix.setReplaceVideoSettingsButton(newValue)));
 			scrollList.add(new BooleanToggleElement(this, "option.configScreenHotkeyEnabled", FullscreenFix.isConfigScreenHotkeyEnabled()).addSaveConsumer(newValue -> FullscreenFix.setConfigScreenHotkeyEnabled(newValue)));

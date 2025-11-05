@@ -11,18 +11,19 @@ import org.lwjgl.glfw.GLFWVidMode;
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.MonitorInfo;
 import b100.fullscreenfix.VideoMode;
-import b100.fullscreenfix.mixin.access.IScreen;
 import b100.fullscreenfix.util.GLFWUtil;
 import b100.fullscreenfix.util.Util;
-import b100.gui.FocusDirection;
-import b100.gui.Focusable;
-import b100.gui.GuiButton;
-import b100.gui.GuiElement;
-import b100.gui.GuiListButton;
-import b100.gui.GuiScreen;
-import b100.gui.GuiScrollableList;
-import b100.gui.GuiScrollableList.ListLayout;
-import b100.gui.GuiUtils;
+import b100.lib.client.gui.FocusDirection;
+import b100.lib.client.gui.Focusable;
+import b100.lib.client.gui.GuiButton;
+import b100.lib.client.gui.GuiElement;
+import b100.lib.client.gui.GuiListButton;
+import b100.lib.client.gui.GuiScreen;
+import b100.lib.client.gui.GuiScrollableList;
+import b100.lib.client.gui.GuiScrollableList.ListLayout;
+import b100.lib.client.gui.GuiUtils;
+import b100.lib.client.mixin.IScreen;
+import b100.lib.client.translate.Translate;
 import net.minecraft.text.Text;
 
 public class ScreenResolutionsMenu extends GuiScreen {
@@ -70,12 +71,12 @@ public class ScreenResolutionsMenu extends GuiScreen {
 	public ScreenResolutionsMenu(IScreen parentScreen) {
 		super(parentScreen);
 		
-		title = FullscreenFix.translate("screen.fullscreenResolution.title");
+		title = Translate.translate("screen.fullscreenResolution.title");
 	}
 	
 	@Override
 	protected void onInit() {
-		applyButton = new GuiButton(this, FullscreenFix.translate("button.apply"));
+		applyButton = new GuiButton(this, Translate.translate("button.apply"));
 		cancelButton = new GuiButton(this, null);
 		
 		applyButton.addActionListener((e) -> apply());
@@ -166,10 +167,10 @@ public class ScreenResolutionsMenu extends GuiScreen {
 	public void updateButtons() {
 		if(selectedMode != previousMode) {
 			applyButton.setClickable(true);
-			cancelButton.text = FullscreenFix.translate("button.cancel");
+			cancelButton.text = Translate.translate("button.cancel");
 		}else {
 			applyButton.setClickable(false);
-			cancelButton.text = FullscreenFix.translate("button.done");
+			cancelButton.text = Translate.translate("button.done");
 		}
 	}
 	
@@ -559,7 +560,7 @@ public class ScreenResolutionsMenu extends GuiScreen {
 			if(monitor != null) {
 				this.text = Text.of("Monitor " + monitor.id);
 			}else {
-				this.text = FullscreenFix.translate("option.fullscreenResolution.default");
+				this.text = Translate.translate("option.fullscreenResolution.default");
 			}
 		}
 		

@@ -7,7 +7,7 @@ import org.apache.commons.lang3.mutable.MutableObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import b100.fullscreenfix.util.ConfigUtil;
+import b100.lib.client.util.ConfigUtil;
 import net.fabricmc.loader.api.FabricLoader;
 
 /**

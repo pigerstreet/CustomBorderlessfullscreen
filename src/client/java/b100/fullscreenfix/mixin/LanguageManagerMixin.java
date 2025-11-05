@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import b100.fullscreenfix.FullscreenFix;
+import b100.lib.client.translate.Translate;
 import net.minecraft.client.resource.language.LanguageManager;
 import net.minecraft.resource.ResourceManager;
 
@@ -14,7 +14,7 @@ public class LanguageManagerMixin {
 	
 	@Inject(method = "reload", at = @At("HEAD"))
 	private void onReload(ResourceManager resourceManager, CallbackInfo ci) {
-		FullscreenFix.loadTranslations();
+		Translate.loadTranslations();
 	}
 
 }

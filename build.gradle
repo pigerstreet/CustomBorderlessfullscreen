@@ -52,7 +52,18 @@ dependencies {
 	
 	// Sodium
     modImplementation("maven.modrinth:sodium:${project.sodium_version}")
+	
+	// B100Lib
+    include(modImplementation("maven.modrinth:b100lib:${project.b100lib_version}"))
+    
+    // modImplementation(
+	// 	files("/../B100Lib/build/libs/b100lib-${project.b100lib_version}.jar")
+    // )
 }
+
+// remapJar {
+// 	nestedJars.from(file("/../B100Lib/build/libs/b100lib-${project.b100lib_version}.jar"))
+// }
 
 processResources {
 	inputs.property "version", project.version
