@@ -23,7 +23,6 @@ import b100.lib.client.gui.GuiScrollableList;
 import b100.lib.client.gui.GuiScrollableList.ListLayout;
 import b100.lib.client.gui.GuiUtils;
 import b100.lib.client.mixin.IScreen;
-import b100.lib.client.translate.Translate;
 import net.minecraft.text.Text;
 
 public class ScreenResolutionsMenu extends GuiScreen {
@@ -71,12 +70,12 @@ public class ScreenResolutionsMenu extends GuiScreen {
 	public ScreenResolutionsMenu(IScreen parentScreen) {
 		super(parentScreen);
 		
-		title = Translate.translate("screen.fullscreenResolution.title");
+		title = FullscreenFix.TRANS.asText("screen.fullscreenResolution.title");
 	}
 	
 	@Override
 	protected void onInit() {
-		applyButton = new GuiButton(this, Translate.translate("button.apply"));
+		applyButton = new GuiButton(this, FullscreenFix.TRANS.asText("button.apply"));
 		cancelButton = new GuiButton(this, null);
 		
 		applyButton.addActionListener((e) -> apply());
@@ -167,10 +166,10 @@ public class ScreenResolutionsMenu extends GuiScreen {
 	public void updateButtons() {
 		if(selectedMode != previousMode) {
 			applyButton.setClickable(true);
-			cancelButton.text = Translate.translate("button.cancel");
+			cancelButton.text = FullscreenFix.TRANS.asText("button.cancel");
 		}else {
 			applyButton.setClickable(false);
-			cancelButton.text = Translate.translate("button.done");
+			cancelButton.text = FullscreenFix.TRANS.asText("button.done");
 		}
 	}
 	
@@ -560,7 +559,7 @@ public class ScreenResolutionsMenu extends GuiScreen {
 			if(monitor != null) {
 				this.text = Text.of("Monitor " + monitor.id);
 			}else {
-				this.text = Translate.translate("option.fullscreenResolution.default");
+				this.text = FullscreenFix.TRANS.asText("option.fullscreenResolution.default");
 			}
 		}
 		

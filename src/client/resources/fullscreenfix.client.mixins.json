@@ -7,7 +7,6 @@
 		"access.WindowAccess",
 		"InputUtilMixin",
 		"KeyboardMixin",
-		"LanguageManagerMixin",
 		"VideoOptionsScreenMixin",
 		"WindowMixin"
 	],

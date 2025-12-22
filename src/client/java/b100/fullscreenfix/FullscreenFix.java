@@ -13,7 +13,7 @@ import b100.fullscreenfix.mixin.access.WindowAccess;
 import b100.fullscreenfix.util.GLFWUtil;
 import b100.lib.client.gui.GuiUtils;
 import b100.lib.client.mixin.IScreen;
-import b100.lib.client.translate.Translate;
+import b100.lib.client.translate.Translations;
 import b100.lib.client.util.ConfigUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -53,8 +53,10 @@ public class FullscreenFix {
 	 */
 	public static SimpleOption<Integer> fullscreenOption = createFullscreenOption();
 	
+	public static final Translations TRANS = Translations.get(null);
+	
 	static {
-		Translate.registerNamespace(MODID);
+		Translations.loadFromNamespace(MODID);
 		
 		loadConfig();
 	}
@@ -214,13 +216,13 @@ public class FullscreenFix {
 	private static Text getFullscreenModeDisplayText() {
 		FullscreenMode mode = getCurrentFullscreenMode();
 		StringBuilder str = new StringBuilder();
-		str.append(Translate.translateToString("option.fullscreen")).append(": ");
+		str.append(TRANS.asString("option.fullscreen")).append(": ");
 		if(mode == FullscreenMode.BORDERLESS) {
-			str.append(Translate.translateToString("option.fullscreen.borderless"));
+			str.append(TRANS.asString("option.fullscreen.borderless"));
 		}else if(mode == FullscreenMode.ON) {
-			str.append(Translate.translateToString("option.fullscreen.on"));
+			str.append(TRANS.asString("option.fullscreen.on"));
 		}else {
-			str.append(Translate.translateToString("option.fullscreen.off"));
+			str.append(TRANS.asString("option.fullscreen.off"));
 		}
 		return Text.of(str.toString());
 	}
