@@ -47,6 +47,8 @@ public class FullscreenFix {
 	 * May be null for current resolution
 	 */
 	private static VideoMode fullscreenVideoMode;
+
+	private static MonitorInfo lastFullscreenMonitor;
 	
 	/**
 	 * Custom option for the vanilla video settings menu
@@ -127,6 +129,19 @@ public class FullscreenFix {
 			fullscreenVideoMode = value;
 			updateWindow();
 		}
+	}
+	
+	public static void setLastFullscreenMonitor(MonitorInfo monitor) {
+		if(!MonitorInfo.comparePositionAndSize(lastFullscreenMonitor, monitor)) {
+			debugPrint("Change fullscreen monitor: " + monitor.toConfigString());
+			
+			lastFullscreenMonitor = monitor;
+			saveConfig();
+		}
+	}
+	
+	public static MonitorInfo getLastFullscreenMonitor() {
+		return lastFullscreenMonitor;
 	}
 	
 	public static boolean isAutoMinimizeEnabled() {
@@ -279,6 +294,9 @@ public class FullscreenFix {
 		}
 		str.append("replaceVideoSettingsButton:" + replaceVideoSettingsButton + "\n");
 		str.append("configScreenHotkeyEnabled:" + configScreenHotkeyEnabled + "\n");
+		if(lastFullscreenMonitor != null) {
+			str.append("lastFullscreenMonitor:" + lastFullscreenMonitor.toConfigString() + "\n");
+		}
 		
 		ConfigUtil.saveStringToFile(str.toString(), CONFIG_FILE);
 	}
@@ -300,6 +318,8 @@ public class FullscreenFix {
 			captureCursorInFullscreen = value.equalsIgnoreCase("true");
 		}else if(key.equals("configScreenHotkeyEnabled")) {
 			configScreenHotkeyEnabled = value.equalsIgnoreCase("true");
+		}else if(key.equals("lastFullscreenMonitor")) {
+			lastFullscreenMonitor = MonitorInfo.fromConfigString(value);
 		}
 	}
 	

@@ -24,7 +24,7 @@ public class Win32Util {
 		return hwnd;
 	}
 	
-	public static void updateWindowState(Window window, int windowPosX, int windowPosY, int windowWidth, int windowHeight, boolean windowWasMaximized) {
+	public static void updateWindowState(Window window, int windowPosX, int windowPosY, int windowWidth, int windowHeight, boolean windowWasMaximized, boolean firstUpdate) {
 		boolean fullscreen = window.isFullscreen();
 		boolean borderless = FullscreenFix.isBorderlessEnabled();
 		boolean optimizations = FullscreenFix.isWindowsFullscreenOptimizationsEnabled();
@@ -80,13 +80,15 @@ public class Win32Util {
 			// Borderless Fullscreen without fullscreen optimizations, code taken from the Cubes without Borders Mod, licensed MIT
 			// https://github.com/Kir-Antipov/cubes-without-borders
 			
-			MonitorInfo monitor = MonitorInfo.getMonitor(window);
+			MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
 			GLFWUtil.enableFullscreen(window, monitor);
 			glfwSetWindowAttrib(window.getHandle(), GLFW_AUTO_ICONIFY, 0);
 			
 			SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 			setWindowStyle(hwnd, WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SYSMENU | WS_GROUP);
 			setWindowExtendedStyle(hwnd, WS_EX_APPWINDOW | WS_EX_ACCEPTFILES | WS_EX_COMPOSITED | WS_EX_LAYERED);
+			
+			FullscreenFix.setLastFullscreenMonitor(monitor);
 		}else if(borderless && optimizations) {
 			FullscreenFix.print("Change to Borderless Fullscreen with Fullscreen optimizations");
 			
@@ -97,9 +99,11 @@ public class Win32Util {
 			setDefaultWindowStyle(window, hwnd);
 			glfwSetWindowAttrib(window.getHandle(), GLFW_DECORATED, 0);
 			
-			MonitorInfo monitor = MonitorInfo.getMonitor(window);
+			MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
 			glfwSetWindowPos(window.getHandle(), monitor.posX, monitor.posY);
 			glfwSetWindowSize(window.getHandle(), monitor.width, monitor.height);
+			
+			FullscreenFix.setLastFullscreenMonitor(monitor);
 		}else {
 			FullscreenFix.print("Change to GLFW Fullscreen");
 
@@ -109,8 +113,10 @@ public class Win32Util {
 			setDefaultWindowStyle(window, hwnd);
 			glfwSetWindowAttrib(window.getHandle(), GLFW_AUTO_ICONIFY, FullscreenFix.isAutoMinimizeEnabled() ? 1 : 0);
 			
-			MonitorInfo monitor = MonitorInfo.getMonitor(window);
+			MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
 			GLFWUtil.enableFullscreen(window, monitor);
+			
+			FullscreenFix.setLastFullscreenMonitor(monitor);
 		}
 		
 		GLFWUtil.updateCursorMode();

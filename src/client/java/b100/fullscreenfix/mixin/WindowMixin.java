@@ -83,7 +83,6 @@ public abstract class WindowMixin {
 		glfwSetWindowMaximizeCallback(getHandle(), (window, maximized) -> {
 			isMaximized = maximized;
 		});
-		
 	}
 	
 	@Inject(method = "swapBuffers", at = @At(value = "TAIL"))
@@ -110,7 +109,12 @@ public abstract class WindowMixin {
 	}
 	
 	private void updateWindowState() {
+		final boolean firstUpdate = this.firstUpdate;
+		
 		FullscreenFix.debugPrint("Update Window State");
+		if(firstUpdate) {
+			FullscreenFix.debugPrint("First update!");
+		}
 		
 		if(!wasFullscreen) {
 			windowMaximized = isMaximized;
@@ -136,7 +140,7 @@ public abstract class WindowMixin {
 		}
 		
 		if(firstUpdate) {
-			firstUpdate = false;
+			this.firstUpdate = false;
 			
 			if(FullscreenFix.isFullscreenEnabled() && !FullscreenFix.isStartInFullscreenEnabled()) {
 				FullscreenFix.print("Start in fullscreen is disabled, turning off fullscreen");
@@ -163,7 +167,7 @@ public abstract class WindowMixin {
 		final long handle = getHandle();
 		
 		if(Global.OS_WINDOWS) {
-			Win32Util.updateWindowState(window, windowPosX, windowPosY, windowWidth, windowHeight, windowMaximized);
+			Win32Util.updateWindowState(window, windowPosX, windowPosY, windowWidth, windowHeight, windowMaximized, firstUpdate);
 			FullscreenFix.windowNeedsUpdate = false;
 			return;
 		}
@@ -188,8 +192,10 @@ public abstract class WindowMixin {
 			
 			glfwSetWindowAttrib(handle, GLFW_AUTO_ICONIFY, FullscreenFix.isAutoMinimizeEnabled() ? 1 : 0);
 			
-			MonitorInfo monitor = MonitorInfo.getMonitor(window);
+			MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
 			GLFWUtil.enableFullscreen(window, monitor);
+			
+			FullscreenFix.setLastFullscreenMonitor(monitor);
 		}else {
 			if(GLFWUtil.isFullscreen(window)) {
 				GLFWUtil.disableFullscreen(window, windowPosX, windowPosY, windowWidth, windowHeight);	
@@ -198,11 +204,13 @@ public abstract class WindowMixin {
 			if(fullscreen && FullscreenFix.isBorderlessEnabled()) {
 				FullscreenFix.print("Change to Borderless Fullscreen");
 				
-				MonitorInfo monitor = MonitorInfo.getMonitor(window);
+				MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
 				
 				glfwSetWindowAttrib(handle, GLFW_DECORATED, 0);
 				glfwSetWindowPos(handle, monitor.posX, monitor.posY);
 				glfwSetWindowSize(handle, monitor.width, monitor.height);
+
+				FullscreenFix.setLastFullscreenMonitor(monitor);
 			}else {
 				FullscreenFix.print("Change to Windowed");
 				
