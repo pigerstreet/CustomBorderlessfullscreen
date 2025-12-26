@@ -82,7 +82,7 @@ public class GLFWUtil {
 	public static int getUpdatedCursorMode(int mode) {
 		if(mode == GLFW_CURSOR_NORMAL || mode == GLFW_CURSOR_CAPTURED) {
 			boolean isCaptured = mode == GLFW_CURSOR_CAPTURED;
-			boolean shouldBeCaptured = FullscreenFix.isCaptureCursorInFullscreenEnabled() && FullscreenFix.isFullscreenEnabled();
+			boolean shouldBeCaptured = FullscreenFix.CAPTURE_CURSOR.getBoolean() && FullscreenFix.isFullscreenEnabled();
 			if(isCaptured != shouldBeCaptured) {
 				if(shouldBeCaptured) {
 					mode = GLFW_CURSOR_CAPTURED;
@@ -95,7 +95,11 @@ public class GLFWUtil {
 	}
 	
 	public static void updateCursorMode() {
-		long windowHandle = MinecraftClient.getInstance().getWindow().getHandle();
+		Window window = MinecraftClient.getInstance().getWindow();
+		if(window == null) {
+			return;
+		}
+		long windowHandle = window.getHandle();
 		
 		int cursorMode = glfwGetInputMode(windowHandle, GLFW_CURSOR);
 		final int prevCursorMode = cursorMode;

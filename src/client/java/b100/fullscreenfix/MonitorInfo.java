@@ -14,7 +14,7 @@ public class MonitorInfo {
 	
 	public static MonitorInfo getMonitor(Window window, boolean firstUpdate) {
 		if(firstUpdate) {
-			MonitorInfo last = FullscreenFix.getLastFullscreenMonitor();
+			MonitorInfo last = FullscreenFix.LAST_FULLSCREEN_MONITOR.get();
 			if(last != null) {
 				FullscreenFix.debugPrint("Using last fullscreen monitor: " + last.toConfigString());
 				return last;

@@ -22,7 +22,7 @@ public class KeyboardMixin {
 		)
 	)
 	private void openMenuInsteadOfTogglingFullscreen(Window instance, Operation<Void> original) {
-		if(Screen.hasControlDown() && FullscreenFix.isConfigScreenHotkeyEnabled()) {
+		if(Screen.hasControlDown() && FullscreenFix.CONFIG_SCREEN_HOTKEY_ENABLED.getBoolean()) {
 			FullscreenFix.openConfigScreen();
 			return;
 		}

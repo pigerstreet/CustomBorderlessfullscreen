@@ -11,10 +11,13 @@ import com.mojang.serialization.Codec;
 import b100.fullscreenfix.gui.ConfigScreen;
 import b100.fullscreenfix.mixin.access.WindowAccess;
 import b100.fullscreenfix.util.GLFWUtil;
+import b100.lib.client.config.BooleanProperty;
+import b100.lib.client.config.BooleanPropertyImpl;
+import b100.lib.client.config.Config;
+import b100.lib.client.config.Property;
 import b100.lib.client.gui.GuiUtils;
 import b100.lib.client.mixin.IScreen;
 import b100.lib.client.translate.Translations;
-import b100.lib.client.util.ConfigUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
@@ -28,41 +31,144 @@ import net.minecraft.util.math.MathHelper;
 public class FullscreenFix {
 
 	private static Window window;
-	
-	// Config
-	
+
 	public static boolean windowNeedsUpdate = true;
 	public static boolean fullscreenModeWasChanged = false;
 	
-	private static boolean enableModNextLaunch = Global.MOD_ENABLED;
-	private static boolean borderlessFullscreen = true;
-	private static boolean fullscreenOptimizations = true;
-	private static boolean autoMinimize = true;
-	private static boolean startInFullscreen = true;
-	private static boolean replaceVideoSettingsButton = true;
-	private static boolean captureCursorInFullscreen = false;
-	private static boolean configScreenHotkeyEnabled = true;
+	// Config
+	public static final BooleanProperty ENABLE_NEXT_LAUNCH = BooleanProperty.create(Global.MOD_ENABLED);
+	public static final BooleanProperty FULLSCREEN = BooleanProperty.create(false, FullscreenFix::isFullscreenEnabled, FullscreenFix::setFullscreen);
+	public static final BooleanProperty BORDERLESS_FULLSCREEN = new BooleanPropertyImpl(true) {
+		@Override
+		public void setBoolean(boolean value) {
+			if(value != getBoolean()) {
+				super.setBoolean(value);
+				updateWindow();
+			}
+		}
+	};
+	public static final BooleanProperty FULLSCREEN_OPTIMIZATIONS = new BooleanPropertyImpl(true) {
+		@Override
+		public void setBoolean(boolean value) {
+			if(value != getBoolean()) {
+				super.setBoolean(value);
+				updateWindow();
+			}
+		};
+	};
+	public static final BooleanProperty AUTO_MINIMIZE = new BooleanPropertyImpl(true) {
+		@Override
+		public void setBoolean(boolean value) {
+			if(value != getBoolean()) {
+				super.setBoolean(value);
+				updateWindow();
+			}
+		};
+	};
+	public static final BooleanProperty START_IN_FULLSCREEN = new BooleanPropertyImpl(true);
+	public static final BooleanProperty REPLACE_VIDEO_SETTINGS_BUTTON = new BooleanPropertyImpl(true);
+	public static final BooleanProperty CAPTURE_CURSOR = new BooleanPropertyImpl(false) {
+		@Override
+		public void setBoolean(boolean value) {
+			super.setBoolean(value);
+			GLFWUtil.updateCursorMode();
+		};
+	};
+	public static final BooleanProperty CONFIG_SCREEN_HOTKEY_ENABLED = new BooleanPropertyImpl(true);
+	public static Property<VideoMode> FULLSCREEN_VIDEO_MODE = new Property<VideoMode>() {
+		private VideoMode value;
+		
+		@Override
+		public VideoMode get() {
+			return value;
+		}
+		
+		@Override
+		public void set(VideoMode value) {
+			if(!VideoMode.compare(this.value, value)) {
+				this.value = value;
+				updateWindow();
+			}
+		}
+		
+		@Override
+		public VideoMode getDefaultValue() {
+			return null;
+		}
+		
+		@Override
+		public String stringValue() {
+			return value != null ? value.toConfigString() : null;
+		}
+		
+		@Override
+		public void parse(String string) {
+			this.value = VideoMode.parse(string);
+		}
+	};
+	public static Property<MonitorInfo> LAST_FULLSCREEN_MONITOR = new Property<MonitorInfo>() {
+		private MonitorInfo value;
+		
+		@Override
+		public MonitorInfo get() {
+			return value;
+		}
+		
+		@Override
+		public void set(MonitorInfo value) {
+			if(!MonitorInfo.comparePositionAndSize(this.value, value)) {
+				debugPrint("Change fullscreen monitor: " + value.toConfigString());
+				
+				this.value = value;
+				CONFIG.save();
+			}
+		}
+		
+		@Override
+		public MonitorInfo getDefaultValue() {
+			return null;
+		}
+		
+		@Override
+		public String stringValue() {
+			return value != null ? value.toConfigString() : null;
+		}
+		
+		@Override
+		public void parse(String string) {
+			this.value = MonitorInfo.fromConfigString(string);
+		}
+	};
 	
-	/**
-	 * May be null for current resolution
-	 */
-	private static VideoMode fullscreenVideoMode;
+	public static final Config CONFIG = new Config(Global.CONFIG_FILE);
+	static {
+		CONFIG.register("enableMod", ENABLE_NEXT_LAUNCH);
+		CONFIG.register("borderlessFullscreen", BORDERLESS_FULLSCREEN);
+		CONFIG.register("fullscreenOptimizations", FULLSCREEN_OPTIMIZATIONS);
+		CONFIG.register("autoMinimize", AUTO_MINIMIZE);
+		CONFIG.register("startInFullscreen", START_IN_FULLSCREEN);
+		CONFIG.register("replaceVideoSettingsButton", REPLACE_VIDEO_SETTINGS_BUTTON);
+		CONFIG.register("captureCursorInFullscreen", CAPTURE_CURSOR);
+		CONFIG.register("configScreenHotkeyEnabled", CONFIG_SCREEN_HOTKEY_ENABLED);
+		CONFIG.register("fullscreenVideoMode", FULLSCREEN_VIDEO_MODE);
+		CONFIG.load();
+	}
 
-	private static MonitorInfo lastFullscreenMonitor;
-	
 	/**
 	 * Custom option for the vanilla video settings menu
 	 */
 	public static SimpleOption<Integer> fullscreenOption = createFullscreenOption();
+
+	////////////////////////////////////
 	
 	public static final Translations TRANS = Translations.get(null);
 	
 	static {
 		Translations.loadFromNamespace(MODID);
-		
-		loadConfig();
 	}
 
+	////////////////////////////////////
+	
 	@SuppressWarnings("resource")
 	public static void openConfigScreen() {
 		IScreen currentScreen = (IScreen) MinecraftClient.getInstance().currentScreen;
@@ -72,36 +178,6 @@ public class FullscreenFix {
 	}
 	
 	////////////////////////////////////
-	
-	public static boolean isModEnabledNextLaunch() {
-		return enableModNextLaunch;
-	}
-	
-	public static void setModEnabled(boolean value) {
-		enableModNextLaunch = value;
-	}
-	
-	public static boolean isBorderlessEnabled() {
-		return borderlessFullscreen;
-	}
-	
-	public static void setBorderless(boolean value) {
-		if(value != borderlessFullscreen) {
-			borderlessFullscreen = value;
-			updateWindow();
-		}
-	}
-	
-	public static boolean isWindowsFullscreenOptimizationsEnabled() {
-		return fullscreenOptimizations;
-	}
-	
-	public static void setWindowsFullscreenOptimizations(boolean value) {
-		if(value != fullscreenOptimizations) {
-			fullscreenOptimizations = value;
-			updateWindow();
-		}
-	}
 	
 	public static boolean isFullscreenEnabled() {
 		if(window == null) {
@@ -119,78 +195,6 @@ public class FullscreenFix {
 			fullscreenOption.setValue(value);
 		}
 	}
-	
-	public static VideoMode getFullscreenVideoMode() {
-		return fullscreenVideoMode;
-	}
-	
-	public static void setFullscreenVideoMode(VideoMode value) {
-		if(!VideoMode.compare(fullscreenVideoMode, value)) {
-			fullscreenVideoMode = value;
-			updateWindow();
-		}
-	}
-	
-	public static void setLastFullscreenMonitor(MonitorInfo monitor) {
-		if(!MonitorInfo.comparePositionAndSize(lastFullscreenMonitor, monitor)) {
-			debugPrint("Change fullscreen monitor: " + monitor.toConfigString());
-			
-			lastFullscreenMonitor = monitor;
-			saveConfig();
-		}
-	}
-	
-	public static MonitorInfo getLastFullscreenMonitor() {
-		return lastFullscreenMonitor;
-	}
-	
-	public static boolean isAutoMinimizeEnabled() {
-		return autoMinimize;
-	}
-	
-	public static void setAutoMinimize(boolean value) {
-		if(autoMinimize != value) {
-			autoMinimize = value;
-			updateWindow();
-		}
-	}
-	
-	public static boolean isStartInFullscreenEnabled() {
-		return startInFullscreen;
-	}
-	
-	public static void setStartInFullscreen(boolean value) {
-		startInFullscreen = value;
-	}
-	
-	public static void setReplaceVideoSettingsButton(boolean value) {
-		replaceVideoSettingsButton = value;
-	}
-	
-	public static boolean shouldReplaceVideoSettingsButton() {
-		return replaceVideoSettingsButton;
-	}
-	
-	public static void setCaptureCursorInFullscreen(boolean value) {
-		captureCursorInFullscreen = value;
-		
-		GLFWUtil.updateCursorMode();
-	}
-	
-	public static boolean isCaptureCursorInFullscreenEnabled() {
-		return captureCursorInFullscreen;
-	}
-	
-	public static void setConfigScreenHotkeyEnabled(boolean value) {
-		configScreenHotkeyEnabled = value;
-	}
-	
-	public static boolean isConfigScreenHotkeyEnabled() {
-		return configScreenHotkeyEnabled;
-	}
-	
-	////////////////////////////////////
-	
 	public static void updateWindow() {
 		windowNeedsUpdate = true;
 	}
@@ -244,7 +248,7 @@ public class FullscreenFix {
 	
 	public static FullscreenMode getCurrentFullscreenMode() {
 		if(isFullscreenEnabled()) {
-			if(isBorderlessEnabled()) {
+			if(BORDERLESS_FULLSCREEN.getBoolean()) {
 				return FullscreenMode.BORDERLESS;
 			}
 			return FullscreenMode.ON;
@@ -258,9 +262,9 @@ public class FullscreenFix {
 		}else {
 			setFullscreen(true);
 			if(mode == FullscreenMode.BORDERLESS) {
-				setBorderless(true);
+				BORDERLESS_FULLSCREEN.setBoolean(true);
 			}else {
-				setBorderless(false);
+				BORDERLESS_FULLSCREEN.setBoolean(false);
 			}
 		}
 		fullscreenModeWasChanged = true;
@@ -274,55 +278,6 @@ public class FullscreenFix {
 			return null;
 		}
 	}
-	
-	////////////////////////////////////
-	
-	public static void loadConfig() {
-		ConfigUtil.loadConfig(CONFIG_FILE, (key, value) -> parse(key, value), ':');
-	}
-	
-	public static void saveConfig() {
-		StringBuilder str = new StringBuilder();
-		str.append("enableMod:" + enableModNextLaunch + "\n");
-		str.append("borderlessFullscreen:" + borderlessFullscreen + "\n");
-		str.append("fullscreenOptimizations:" + fullscreenOptimizations + "\n");
-		str.append("captureCursorInFullscreen:" + captureCursorInFullscreen + "\n");
-		str.append("autoMinimize:" + autoMinimize + "\n");
-		str.append("startInFullscreen:" + startInFullscreen + "\n");
-		if(fullscreenVideoMode != null) {
-			str.append("fullscreenMode:" + fullscreenVideoMode.toConfigString() + "\n");	
-		}
-		str.append("replaceVideoSettingsButton:" + replaceVideoSettingsButton + "\n");
-		str.append("configScreenHotkeyEnabled:" + configScreenHotkeyEnabled + "\n");
-		if(lastFullscreenMonitor != null) {
-			str.append("lastFullscreenMonitor:" + lastFullscreenMonitor.toConfigString() + "\n");
-		}
-		
-		ConfigUtil.saveStringToFile(str.toString(), CONFIG_FILE);
-	}
-
-	public static void parse(String key, String value) {
-		if(key.equals("borderlessFullscreen")) {
-			borderlessFullscreen = value.equalsIgnoreCase("true");
-		}else if(key.equals("fullscreenOptimizations")) {
-			fullscreenOptimizations = value.equalsIgnoreCase("true");
-		}else if(key.equals("autoMinimize")) {
-			autoMinimize = value.equalsIgnoreCase("true");
-		}else if(key.equals("startInFullscreen")) {
-			startInFullscreen = value.equalsIgnoreCase("true");
-		}else if(key.equals("fullscreenMode")) {
-			fullscreenVideoMode = VideoMode.parse(value);
-		}else if(key.equals("replaceVideoSettingsButton")) {
-			replaceVideoSettingsButton = value.equalsIgnoreCase("true");
-		}else if(key.equals("captureCursorInFullscreen")) {
-			captureCursorInFullscreen = value.equalsIgnoreCase("true");
-		}else if(key.equals("configScreenHotkeyEnabled")) {
-			configScreenHotkeyEnabled = value.equalsIgnoreCase("true");
-		}else if(key.equals("lastFullscreenMonitor")) {
-			lastFullscreenMonitor = MonitorInfo.fromConfigString(value);
-		}
-	}
-	
 	////////////////////////////////////
 	
 	public static void debugPrint(String string) {
@@ -334,5 +289,4 @@ public class FullscreenFix {
 	public static void print(String string) {
 		Global.print(string);
 	}
-
 }

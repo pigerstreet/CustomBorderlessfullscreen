@@ -142,7 +142,7 @@ public abstract class WindowMixin {
 		if(firstUpdate) {
 			this.firstUpdate = false;
 			
-			if(FullscreenFix.isFullscreenEnabled() && !FullscreenFix.isStartInFullscreenEnabled()) {
+			if(FullscreenFix.isFullscreenEnabled() && !FullscreenFix.START_IN_FULLSCREEN.getBoolean()) {
 				FullscreenFix.print("Start in fullscreen is disabled, turning off fullscreen");
 				FullscreenFix.setFullscreen(false);
 			}
@@ -151,14 +151,14 @@ public abstract class WindowMixin {
 		if(fullscreenModeHasChanged) {
 			fullscreenModeHasChanged = false;
 			if(newFullscreenMode == null) {
-				FullscreenFix.setFullscreenVideoMode(null);
+				FullscreenFix.FULLSCREEN_VIDEO_MODE.set(null);
 			}else {
 				GLFWVidMode glfwVidMode = GLFWUtil.findMatchingVidMode(newFullscreenMode);
 				if(glfwVidMode == null) {
 					FullscreenFix.print("Could not find matching GLFW VideoMode: " + newFullscreenMode.getWidth() + " x " + newFullscreenMode.getHeight() + " @ " + newFullscreenMode.getRefreshRate() + "hz");
-					FullscreenFix.setFullscreenVideoMode(null);
+					FullscreenFix.FULLSCREEN_VIDEO_MODE.set(null);
 				}else {
-					FullscreenFix.setFullscreenVideoMode(new VideoMode(glfwGetPrimaryMonitor(), glfwVidMode));	
+					FullscreenFix.FULLSCREEN_VIDEO_MODE.set(new VideoMode(glfwGetPrimaryMonitor(), glfwVidMode));	
 				}
 			}
 		}
@@ -174,7 +174,7 @@ public abstract class WindowMixin {
 		
 		glfwHideWindow(handle);
 
-		VideoMode fullscreenMode = FullscreenFix.getFullscreenVideoMode();
+		VideoMode fullscreenMode = FullscreenFix.FULLSCREEN_VIDEO_MODE.get();
 		if(fullscreen && fullscreenMode != null) {
 			FullscreenFix.print("Change to Fullscreen with custom resolution");
 			
@@ -187,21 +187,21 @@ public abstract class WindowMixin {
 					fullscreenMode.vidMode.height(),
 					fullscreenMode.vidMode.refreshRate()
 			);
-		}else if(fullscreen && !FullscreenFix.isBorderlessEnabled()) {
+		}else if(fullscreen && !FullscreenFix.BORDERLESS_FULLSCREEN.getBoolean()) {
 			FullscreenFix.print("Change to Fullscreen");
 			
-			glfwSetWindowAttrib(handle, GLFW_AUTO_ICONIFY, FullscreenFix.isAutoMinimizeEnabled() ? 1 : 0);
+			glfwSetWindowAttrib(handle, GLFW_AUTO_ICONIFY, FullscreenFix.AUTO_MINIMIZE.getBoolean() ? 1 : 0);
 			
 			MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
 			GLFWUtil.enableFullscreen(window, monitor);
-			
-			FullscreenFix.setLastFullscreenMonitor(monitor);
+
+			FullscreenFix.LAST_FULLSCREEN_MONITOR.set(monitor);
 		}else {
 			if(GLFWUtil.isFullscreen(window)) {
 				GLFWUtil.disableFullscreen(window, windowPosX, windowPosY, windowWidth, windowHeight);	
 			}
 			
-			if(fullscreen && FullscreenFix.isBorderlessEnabled()) {
+			if(fullscreen && FullscreenFix.BORDERLESS_FULLSCREEN.getBoolean()) {
 				FullscreenFix.print("Change to Borderless Fullscreen");
 				
 				MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
@@ -210,7 +210,7 @@ public abstract class WindowMixin {
 				glfwSetWindowPos(handle, monitor.posX, monitor.posY);
 				glfwSetWindowSize(handle, monitor.width, monitor.height);
 
-				FullscreenFix.setLastFullscreenMonitor(monitor);
+				FullscreenFix.LAST_FULLSCREEN_MONITOR.set(monitor);
 			}else {
 				FullscreenFix.print("Change to Windowed");
 				

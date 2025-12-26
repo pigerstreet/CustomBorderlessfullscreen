@@ -31,7 +31,7 @@ public class SodiumCompat {
 
 		@Override
 		public void save() {
-			FullscreenFix.saveConfig();
+			FullscreenFix.CONFIG.save();
 		}
 		
 	}

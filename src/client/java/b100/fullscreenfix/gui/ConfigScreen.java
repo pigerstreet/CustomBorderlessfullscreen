@@ -12,6 +12,7 @@ import b100.lib.client.gui.config.ConfigElement;
 import b100.lib.client.gui.config.CustomOptionElement;
 import b100.lib.client.gui.config.SaveConfigButton;
 import b100.lib.client.mixin.IScreen;
+import b100.lib.client.util.UpdateMode;
 import net.minecraft.text.Text;
 
 public class ConfigScreen extends GuiScrollListScreen {
@@ -31,7 +32,7 @@ public class ConfigScreen extends GuiScrollListScreen {
 	public void onInit() {
 		saveConfigButton = new SaveConfigButton(this);
 		saveConfigButton.addActionListener((e) -> {
-			FullscreenFix.saveConfig();
+			FullscreenFix.CONFIG.save();
 			back();
 		});
 		
@@ -43,26 +44,26 @@ public class ConfigScreen extends GuiScrollListScreen {
 	
 	@Override
 	public void initScrollElements() {
-		scrollList.add(new BooleanToggleElement(this, "option.enableMod", FullscreenFix.isModEnabledNextLaunch()).addSaveConsumer(newValue -> FullscreenFix.setModEnabled(newValue)));
+		scrollList.add(BooleanToggleElement.create(this, "option.enableMod", FullscreenFix.ENABLE_NEXT_LAUNCH, UpdateMode.ON_SAVE));
 		
 		if(Global.MOD_ENABLED) {
-			scrollList.add(new BooleanToggleElement(this, "option.fullscreen", FullscreenFix.isFullscreenEnabled()).addSaveConsumer(newValue -> FullscreenFix.setFullscreen(newValue)));
-			scrollList.add(new BooleanToggleElement(this, "option.borderlessFullscreen", FullscreenFix.isBorderlessEnabled()).addSaveConsumer(newValue -> FullscreenFix.setBorderless(newValue)));
+			scrollList.add(BooleanToggleElement.create(this, "option.fullscreen", FullscreenFix.FULLSCREEN, UpdateMode.ON_SAVE));
+			scrollList.add(BooleanToggleElement.create(this, "option.borderlessFullscreen", FullscreenFix.BORDERLESS_FULLSCREEN, UpdateMode.ON_SAVE));
 			
 			if(Global.OS_WINDOWS) {
-				scrollList.add(new BooleanToggleElement(this, "option.windowsFullscreenOptimizations", FullscreenFix.isWindowsFullscreenOptimizationsEnabled()).addSaveConsumer(newValue -> FullscreenFix.setWindowsFullscreenOptimizations(newValue)));
+				scrollList.add(BooleanToggleElement.create(this, "option.windowsFullscreenOptimizations", FullscreenFix.FULLSCREEN_OPTIMIZATIONS, UpdateMode.ON_SAVE));
 			}
 
-			scrollList.add(new BooleanToggleElement(this, "option.captureCursorInFullscreen", FullscreenFix.isCaptureCursorInFullscreenEnabled()).addSaveConsumer(newValue -> FullscreenFix.setCaptureCursorInFullscreen(newValue)));
-			scrollList.add(new BooleanToggleElement(this, "option.autoMinimize", FullscreenFix.isAutoMinimizeEnabled()).addSaveConsumer(newValue -> FullscreenFix.setAutoMinimize(newValue)));
-			scrollList.add(new BooleanToggleElement(this, "option.startInFullscreen", FullscreenFix.isStartInFullscreenEnabled()).addSaveConsumer(newValue -> FullscreenFix.setStartInFullscreen(newValue)));
+			scrollList.add(BooleanToggleElement.create(this, "option.captureCursorInFullscreen", FullscreenFix.CAPTURE_CURSOR, UpdateMode.ON_SAVE));
+			scrollList.add(BooleanToggleElement.create(this, "option.autoMinimize", FullscreenFix.AUTO_MINIMIZE, UpdateMode.ON_SAVE));
+			scrollList.add(BooleanToggleElement.create(this, "option.startInFullscreen", FullscreenFix.START_IN_FULLSCREEN, UpdateMode.ON_SAVE));
 			
-			fullscreenResolutionButton = scrollList.add(new CustomOptionElement<>(this, "option.fullscreenResolution", FullscreenFix.getFullscreenVideoMode())
+			fullscreenResolutionButton = scrollList.add(new CustomOptionElement<>(this, "option.fullscreenResolution", FullscreenFix.FULLSCREEN_VIDEO_MODE.get())
 			.addActionListener((e) -> utils.setScreen(new ScreenResolutionsMenu(this)))
 			.setToTextFunction((videoMode) -> videoMode != null ? Text.of(videoMode.toString()) : FullscreenFix.TRANS.asText("value.fullscreenResolution.default")));
-			
-			scrollList.add(new BooleanToggleElement(this, "option.replaceVideoSettings", FullscreenFix.shouldReplaceVideoSettingsButton()).addSaveConsumer(newValue -> FullscreenFix.setReplaceVideoSettingsButton(newValue)));
-			scrollList.add(new BooleanToggleElement(this, "option.configScreenHotkeyEnabled", FullscreenFix.isConfigScreenHotkeyEnabled()).addSaveConsumer(newValue -> FullscreenFix.setConfigScreenHotkeyEnabled(newValue)));
+
+			scrollList.add(BooleanToggleElement.create(this, "option.replaceVideoSettings", FullscreenFix.REPLACE_VIDEO_SETTINGS_BUTTON, UpdateMode.ON_SAVE));
+			scrollList.add(BooleanToggleElement.create(this, "option.configScreenHotkeyEnabled", FullscreenFix.CONFIG_SCREEN_HOTKEY_ENABLED, UpdateMode.ON_SAVE));
 		}
 	}
 	
@@ -84,7 +85,7 @@ public class ConfigScreen extends GuiScrollListScreen {
 	@Override
 	public void onScreenOpened() {
 		if(fullscreenResolutionButton != null) {
-			fullscreenResolutionButton.setValue(FullscreenFix.getFullscreenVideoMode());
+			fullscreenResolutionButton.setValue(FullscreenFix.FULLSCREEN_VIDEO_MODE.get());
 		}
 		super.onScreenOpened();
 	}

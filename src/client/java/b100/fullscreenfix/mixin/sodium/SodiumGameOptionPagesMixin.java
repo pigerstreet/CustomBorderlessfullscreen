@@ -26,7 +26,7 @@ public class SodiumGameOptionPagesMixin {
 			slice = @Slice(from = @At(value = "CONSTANT", args = "stringValue=options.fullscreen"))
 	)
 	private static Option<?> replaceFullscreenButton(Option<?> button) {
-		if(FullscreenFix.shouldReplaceVideoSettingsButton()) {
+		if(FullscreenFix.REPLACE_VIDEO_SETTINGS_BUTTON.getBoolean()) {
 			return SodiumCompat.getCustomFullscreenButton();	
 		}
 		return button;

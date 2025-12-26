@@ -26,9 +26,9 @@ public class Win32Util {
 	
 	public static void updateWindowState(Window window, int windowPosX, int windowPosY, int windowWidth, int windowHeight, boolean windowWasMaximized, boolean firstUpdate) {
 		boolean fullscreen = window.isFullscreen();
-		boolean borderless = FullscreenFix.isBorderlessEnabled();
-		boolean optimizations = FullscreenFix.isWindowsFullscreenOptimizationsEnabled();
-		VideoMode fullscreenMode = FullscreenFix.getFullscreenVideoMode();
+		boolean borderless = FullscreenFix.BORDERLESS_FULLSCREEN.getBoolean();
+		boolean optimizations = FullscreenFix.FULLSCREEN_OPTIMIZATIONS.getBoolean();
+		VideoMode fullscreenMode = FullscreenFix.FULLSCREEN_VIDEO_MODE.get();
 		
 		long hwnd = getWin32Handle(window);
 		
@@ -49,7 +49,7 @@ public class Win32Util {
 					fullscreenMode.vidMode.refreshRate()
 			);
 
-			glfwSetWindowAttrib(window.getHandle(), GLFW_AUTO_ICONIFY, FullscreenFix.isAutoMinimizeEnabled() ? 1 : 0);
+			glfwSetWindowAttrib(window.getHandle(), GLFW_AUTO_ICONIFY, FullscreenFix.AUTO_MINIMIZE.getBoolean() ? 1 : 0);
 			glfwShowWindow(window.getHandle());
 			glfwFocusWindow(window.getHandle());
 		}else if(!fullscreen) {
@@ -88,7 +88,7 @@ public class Win32Util {
 			setWindowStyle(hwnd, WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SYSMENU | WS_GROUP);
 			setWindowExtendedStyle(hwnd, WS_EX_APPWINDOW | WS_EX_ACCEPTFILES | WS_EX_COMPOSITED | WS_EX_LAYERED);
 			
-			FullscreenFix.setLastFullscreenMonitor(monitor);
+			FullscreenFix.LAST_FULLSCREEN_MONITOR.set(monitor);
 		}else if(borderless && optimizations) {
 			FullscreenFix.print("Change to Borderless Fullscreen with Fullscreen optimizations");
 			
@@ -103,7 +103,7 @@ public class Win32Util {
 			glfwSetWindowPos(window.getHandle(), monitor.posX, monitor.posY);
 			glfwSetWindowSize(window.getHandle(), monitor.width, monitor.height);
 			
-			FullscreenFix.setLastFullscreenMonitor(monitor);
+			FullscreenFix.LAST_FULLSCREEN_MONITOR.set(monitor);
 		}else {
 			FullscreenFix.print("Change to GLFW Fullscreen");
 
@@ -111,12 +111,12 @@ public class Win32Util {
 			GLFWUtil.disableFullscreen(window, windowPosX, windowPosY, windowWidth, windowHeight);
 			
 			setDefaultWindowStyle(window, hwnd);
-			glfwSetWindowAttrib(window.getHandle(), GLFW_AUTO_ICONIFY, FullscreenFix.isAutoMinimizeEnabled() ? 1 : 0);
+			glfwSetWindowAttrib(window.getHandle(), GLFW_AUTO_ICONIFY, FullscreenFix.AUTO_MINIMIZE.getBoolean() ? 1 : 0);
 			
 			MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
 			GLFWUtil.enableFullscreen(window, monitor);
 			
-			FullscreenFix.setLastFullscreenMonitor(monitor);
+			FullscreenFix.LAST_FULLSCREEN_MONITOR.set(monitor);
 		}
 		
 		GLFWUtil.updateCursorMode();

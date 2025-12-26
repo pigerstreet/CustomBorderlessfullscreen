@@ -128,7 +128,7 @@ public class ScreenResolutionsMenu extends GuiScreen {
 			monitorSettings.put(monitor, refreshRate);
 		}
 		
-		RefreshRate fullscreenMode = getRefreshRate(FullscreenFix.getFullscreenVideoMode());
+		RefreshRate fullscreenMode = getRefreshRate(FullscreenFix.FULLSCREEN_VIDEO_MODE.get());
 		
 		this.primaryMonitor = monitorMap.get(GLFW.glfwGetPrimaryMonitor());
 		this.previousMode = fullscreenMode;
@@ -153,12 +153,12 @@ public class ScreenResolutionsMenu extends GuiScreen {
 	
 	public void apply() {
 		if(selectedMode != null) {
-			FullscreenFix.setFullscreenVideoMode(new VideoMode(selectedMode.monitor.info.handle, selectedMode.vidMode));
+			FullscreenFix.FULLSCREEN_VIDEO_MODE.set(new VideoMode(selectedMode.monitor.info.handle, selectedMode.vidMode));
 		}else {
-			FullscreenFix.setFullscreenVideoMode(null);
+			FullscreenFix.FULLSCREEN_VIDEO_MODE.set(null);
 		}
 		FullscreenFix.setFullscreen(true);
-		FullscreenFix.saveConfig();
+		FullscreenFix.CONFIG.save();
 		previousMode = selectedMode;
 		updateButtons();
 	}

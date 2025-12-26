@@ -24,7 +24,7 @@ public abstract class VideoOptionsScreenMixin extends GameOptionsScreen {
 	
 	@ModifyArg(method = "addOptions", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/widget/OptionListWidget;addAll([Lnet/minecraft/client/option/SimpleOption;)V"), index = 0)
 	private SimpleOption<?>[] replaceFullscreenOption(SimpleOption<?>[] options) {
-		if(FullscreenFix.shouldReplaceVideoSettingsButton()) {
+		if(FullscreenFix.REPLACE_VIDEO_SETTINGS_BUTTON.getBoolean()) {
 			SimpleOption<?> fullscreenOption = FullscreenFix.getVanillaFullscreenOption();
 			for(int i=0; i < options.length; i++) {
 				SimpleOption<?> option = options[i];
@@ -40,7 +40,7 @@ public abstract class VideoOptionsScreenMixin extends GameOptionsScreen {
 	private void onClose(CallbackInfo ci) {
 		if(FullscreenFix.fullscreenModeWasChanged) {
 			FullscreenFix.print("Save Config");
-			FullscreenFix.saveConfig();
+			FullscreenFix.CONFIG.save();
 			FullscreenFix.fullscreenModeWasChanged = false;
 		}
 	}
