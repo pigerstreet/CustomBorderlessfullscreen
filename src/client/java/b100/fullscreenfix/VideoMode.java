@@ -3,8 +3,9 @@ package b100.fullscreenfix;
 import org.lwjgl.glfw.GLFWVidMode;
 
 import b100.fullscreenfix.util.GLFWUtil;
+import b100.lib.util.ConfigStringifiable;
 
-public class VideoMode {
+public class VideoMode implements ConfigStringifiable {
 	
 	public final long monitor;
 	public final GLFWVidMode vidMode;
@@ -77,7 +78,8 @@ public class VideoMode {
 	public String toString() {
 		return vidMode.width() + " x " + vidMode.height() + " @ " + vidMode.refreshRate() + "hz";
 	}
-	
+
+	@Override
 	public String toConfigString() {
 		MonitorInfo monitorInfo = new MonitorInfo(monitor);
 		return "x:" + monitorInfo.posX
@@ -98,5 +100,4 @@ public class VideoMode {
 		}
 		return o1.monitor == o2.monitor && o1.vidMode.equals(o2.vidMode);
 	}
-	
 }

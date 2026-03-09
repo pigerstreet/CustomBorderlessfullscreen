@@ -11,13 +11,13 @@ import com.mojang.serialization.Codec;
 import b100.fullscreenfix.gui.ConfigScreen;
 import b100.fullscreenfix.mixin.access.WindowAccess;
 import b100.fullscreenfix.util.GLFWUtil;
-import b100.lib.client.config.BooleanProperty;
-import b100.lib.client.config.BooleanPropertyImpl;
-import b100.lib.client.config.Config;
-import b100.lib.client.config.Property;
-import b100.lib.client.gui.GuiUtils;
+import b100.lib.client.gui.util.GuiUtils;
 import b100.lib.client.mixin.IScreen;
-import b100.lib.client.translate.Translations;
+import b100.lib.config.properties.PropertiesFile;
+import b100.lib.config.property.BooleanProperty;
+import b100.lib.config.property.BooleanPropertyImpl;
+import b100.lib.config.property.Property;
+import b100.lib.translate.Translations;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.ClickableWidget;
@@ -29,13 +29,15 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 
 public class FullscreenFix {
-
+	
 	private static Window window;
 
 	public static boolean windowNeedsUpdate = true;
 	public static boolean fullscreenModeWasChanged = false;
 	
 	// Config
+	public static final PropertiesFile CONFIG = new PropertiesFile(Global.CONFIG_FILE);
+	
 	public static final BooleanProperty ENABLE_NEXT_LAUNCH = BooleanProperty.create(Global.MOD_ENABLED);
 	public static final BooleanProperty FULLSCREEN = BooleanProperty.create(false, FullscreenFix::isFullscreenEnabled, FullscreenFix::setFullscreen);
 	public static final BooleanProperty BORDERLESS_FULLSCREEN = new BooleanPropertyImpl(true) {
@@ -75,82 +77,22 @@ public class FullscreenFix {
 		};
 	};
 	public static final BooleanProperty CONFIG_SCREEN_HOTKEY_ENABLED = new BooleanPropertyImpl(true);
-	public static Property<VideoMode> FULLSCREEN_VIDEO_MODE = new Property<VideoMode>() {
-		private VideoMode value;
-		
-		@Override
-		public VideoMode get() {
-			return value;
-		}
-		
-		@Override
-		public void set(VideoMode value) {
-			if(!VideoMode.compare(this.value, value)) {
-				this.value = value;
-				updateWindow();
-			}
-		}
-		
-		@Override
-		public VideoMode getDefaultValue() {
-			return null;
-		}
-		
-		@Override
-		public String stringValue() {
-			return value != null ? value.toConfigString() : null;
-		}
-		
-		@Override
-		public void parse(String string) {
-			this.value = VideoMode.parse(string);
-		}
-	};
-	public static Property<MonitorInfo> LAST_FULLSCREEN_MONITOR = new Property<MonitorInfo>() {
-		private MonitorInfo value;
-		
-		@Override
-		public MonitorInfo get() {
-			return value;
-		}
-		
-		@Override
-		public void set(MonitorInfo value) {
-			if(!MonitorInfo.comparePositionAndSize(this.value, value)) {
-				debugPrint("Change fullscreen monitor: " + value.toConfigString());
-				
-				this.value = value;
-				CONFIG.save();
-			}
-		}
-		
-		@Override
-		public MonitorInfo getDefaultValue() {
-			return null;
-		}
-		
-		@Override
-		public String stringValue() {
-			return value != null ? value.toConfigString() : null;
-		}
-		
-		@Override
-		public void parse(String string) {
-			this.value = MonitorInfo.fromConfigString(string);
-		}
-	};
+	public static Property<VideoMode> FULLSCREEN_VIDEO_MODE = Property.create(null, VideoMode::parse).addValueChangeListener(value -> updateWindow());
+	public static Property<MonitorInfo> LAST_FULLSCREEN_MONITOR = Property.create(null, MonitorInfo::fromConfigString).addValueChangeListener(value -> {
+		debugPrint("Change fullscreen monitor: " + value.toConfigString());
+		CONFIG.save();
+	});
 	
-	public static final Config CONFIG = new Config(Global.CONFIG_FILE);
 	static {
-		CONFIG.register("enableMod", ENABLE_NEXT_LAUNCH);
-		CONFIG.register("borderlessFullscreen", BORDERLESS_FULLSCREEN);
-		CONFIG.register("fullscreenOptimizations", FULLSCREEN_OPTIMIZATIONS);
-		CONFIG.register("autoMinimize", AUTO_MINIMIZE);
-		CONFIG.register("startInFullscreen", START_IN_FULLSCREEN);
-		CONFIG.register("replaceVideoSettingsButton", REPLACE_VIDEO_SETTINGS_BUTTON);
-		CONFIG.register("captureCursorInFullscreen", CAPTURE_CURSOR);
-		CONFIG.register("configScreenHotkeyEnabled", CONFIG_SCREEN_HOTKEY_ENABLED);
-		CONFIG.register("fullscreenVideoMode", FULLSCREEN_VIDEO_MODE);
+		CONFIG.add("enableMod", ENABLE_NEXT_LAUNCH);
+		CONFIG.add("borderlessFullscreen", BORDERLESS_FULLSCREEN);
+		CONFIG.add("fullscreenOptimizations", FULLSCREEN_OPTIMIZATIONS);
+		CONFIG.add("autoMinimize", AUTO_MINIMIZE);
+		CONFIG.add("startInFullscreen", START_IN_FULLSCREEN);
+		CONFIG.add("replaceVideoSettingsButton", REPLACE_VIDEO_SETTINGS_BUTTON);
+		CONFIG.add("captureCursorInFullscreen", CAPTURE_CURSOR);
+		CONFIG.add("configScreenHotkeyEnabled", CONFIG_SCREEN_HOTKEY_ENABLED);
+		CONFIG.add("fullscreenVideoMode", FULLSCREEN_VIDEO_MODE);
 		CONFIG.load();
 	}
 

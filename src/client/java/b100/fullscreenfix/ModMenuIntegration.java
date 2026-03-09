@@ -4,7 +4,7 @@ import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 
 import b100.fullscreenfix.gui.ConfigScreen;
-import b100.lib.client.gui.ScreenWrapper;
+import b100.lib.client.gui.util.ScreenWrapper;
 import b100.lib.client.mixin.IScreen;
 
 public class ModMenuIntegration implements ModMenuApi {

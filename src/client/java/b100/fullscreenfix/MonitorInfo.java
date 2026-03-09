@@ -8,9 +8,10 @@ import java.util.List;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVidMode;
 
+import b100.lib.util.ConfigStringifiable;
 import net.minecraft.client.util.Window;
 
-public class MonitorInfo {
+public class MonitorInfo implements ConfigStringifiable {
 	
 	public static MonitorInfo getMonitor(Window window, boolean firstUpdate) {
 		if(firstUpdate) {
@@ -127,6 +128,7 @@ public class MonitorInfo {
 		refreshRate = vidmode.refreshRate();
 	}
 	
+	@Override
 	public String toConfigString() {
 		return "x:" + posX + ";y:" + posY + ";w:" + width + ";h:" + height;
 	}
