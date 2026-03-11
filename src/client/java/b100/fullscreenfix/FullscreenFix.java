@@ -26,6 +26,8 @@ import net.minecraft.client.option.SimpleOption;
 import net.minecraft.client.option.SimpleOption.TooltipFactory;
 import net.minecraft.client.util.Window;
 import net.minecraft.text.Text;
+import net.minecraft.util.Util;
+import net.minecraft.util.Util.OperatingSystem;
 import net.minecraft.util.math.MathHelper;
 
 public class FullscreenFix {
@@ -40,7 +42,7 @@ public class FullscreenFix {
 	
 	public static final BooleanProperty ENABLE_NEXT_LAUNCH = BooleanProperty.create(Global.MOD_ENABLED);
 	public static final BooleanProperty FULLSCREEN = BooleanProperty.create(false, FullscreenFix::isFullscreenEnabled, FullscreenFix::setFullscreen);
-	public static final BooleanProperty BORDERLESS_FULLSCREEN = new BooleanPropertyImpl(true) {
+	public static final BooleanProperty BORDERLESS_FULLSCREEN = new BooleanPropertyImpl(getBorderlessFullscreenDefaultValue()) {
 		@Override
 		public void setBoolean(boolean value) {
 			if(value != getBoolean()) {
@@ -100,6 +102,13 @@ public class FullscreenFix {
 	 * Custom option for the vanilla video settings menu
 	 */
 	public static SimpleOption<Integer> fullscreenOption = createFullscreenOption();
+	
+	public static boolean getBorderlessFullscreenDefaultValue() {
+		if(Util.getOperatingSystem() == OperatingSystem.LINUX) {
+			return false;
+		}
+		return true;
+	}
 
 	////////////////////////////////////
 	
