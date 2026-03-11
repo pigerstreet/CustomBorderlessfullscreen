@@ -45,7 +45,7 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	
 	// Mod Menu
 	modImplementation("com.terraformersmc:modmenu:${project.modmenu_version}")
@@ -55,15 +55,7 @@ dependencies {
 	
 	// B100Lib
     include(modImplementation("maven.modrinth:b100lib:${project.b100lib_version}"))
-    
-    // modImplementation(
-	// 	files("/../B100Lib/build/libs/b100lib-${project.b100lib_version}.jar")
-    // )
 }
-
-// remapJar {
-// 	nestedJars.from(file("/../B100Lib/build/libs/b100lib-${project.b100lib_version}.jar"))
-// }
 
 processResources {
 	inputs.property "version", project.version
