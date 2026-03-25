@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWVidMode;
 
@@ -23,11 +23,10 @@ import b100.lib.client.gui.screen.GuiScreen;
 import b100.lib.client.gui.util.FocusDirection;
 import b100.lib.client.gui.util.GuiUtils;
 import b100.lib.client.mixin.IScreen;
-import net.minecraft.text.Text;
 
 public class ScreenResolutionsMenu extends GuiScreen {
 	
-	protected Text title;
+	protected Component title;
 
 	protected GuiButton cancelButton;
 	protected GuiButton applyButton;
@@ -557,7 +556,7 @@ public class ScreenResolutionsMenu extends GuiScreen {
 			super(screen);
 			this.monitor = monitor;
 			if(monitor != null) {
-				this.text = Text.of("Monitor " + monitor.id);
+				this.text = Component.nullToEmpty("Monitor " + monitor.id);
 			}else {
 				this.text = FullscreenFix.TRANS.asText("option.fullscreenResolution.default");
 			}
@@ -579,7 +578,7 @@ public class ScreenResolutionsMenu extends GuiScreen {
 		public ResolutionElement(GuiScreen screen, Resolution resolution) {
 			super(screen);
 			this.resolution = resolution;
-			this.text = Text.of(resolution.width + " x " + resolution.height);
+			this.text = Component.nullToEmpty(resolution.width + " x " + resolution.height);
 		}
 
 		@Override
@@ -598,7 +597,7 @@ public class ScreenResolutionsMenu extends GuiScreen {
 		public RefreshRateElement(GuiScreen screen, RefreshRate refreshRate) {
 			super(screen);
 			this.refreshRate = refreshRate;
-			this.text = Text.of(refreshRate.get() + " hz");
+			this.text = Component.nullToEmpty(refreshRate.get() + " hz");
 		}
 
 		@Override

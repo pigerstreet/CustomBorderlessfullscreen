@@ -8,12 +8,12 @@ import org.lwjgl.glfw.GLFWNativeWin32;
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.MonitorInfo;
 import b100.fullscreenfix.VideoMode;
-import net.minecraft.client.util.Window;
+import com.mojang.blaze3d.platform.Window;
 
 public class Win32Util {
 	
 	public static long getWin32Handle(Window window) {
-		return getWin32Handle(window.getHandle());
+		return getWin32Handle(window.getWindow());
 	}
 	
 	public static long getWin32Handle(long window) {
@@ -35,12 +35,12 @@ public class Win32Util {
 		if(fullscreen && fullscreenMode != null) {
 			FullscreenFix.print("Change to Fullscreen with custom resolution");
 			
-			glfwSetWindowAttrib(window.getHandle(), GLFW_DECORATED, 1);
+			glfwSetWindowAttrib(window.getWindow(), GLFW_DECORATED, 1);
 			setWindowStyle(hwnd, WS_VISIBLE);
-			glfwHideWindow(window.getHandle());
+			glfwHideWindow(window.getWindow());
 			
 			MonitorInfo monitorInfo = new MonitorInfo(fullscreenMode.monitor);
-			glfwSetWindowMonitor(window.getHandle(), 
+			glfwSetWindowMonitor(window.getWindow(), 
 					fullscreenMode.monitor,
 					monitorInfo.posX,
 					monitorInfo.posY,
@@ -49,9 +49,9 @@ public class Win32Util {
 					fullscreenMode.vidMode.refreshRate()
 			);
 
-			glfwSetWindowAttrib(window.getHandle(), GLFW_AUTO_ICONIFY, FullscreenFix.AUTO_MINIMIZE.getBoolean() ? 1 : 0);
-			glfwShowWindow(window.getHandle());
-			glfwFocusWindow(window.getHandle());
+			glfwSetWindowAttrib(window.getWindow(), GLFW_AUTO_ICONIFY, FullscreenFix.AUTO_MINIMIZE.getBoolean() ? 1 : 0);
+			glfwShowWindow(window.getWindow());
+			glfwFocusWindow(window.getWindow());
 		}else if(!fullscreen) {
 			if(windowWasMaximized) {
 				FullscreenFix.print("Change to Maximized Windowed Mode");
@@ -66,10 +66,10 @@ public class Win32Util {
 			setDefaultWindowStyle(window, hwnd);
 			
 			// Set Position and Size
-			glfwSetWindowPos(window.getHandle(), windowPosX, windowPosY);
-			glfwSetWindowSize(window.getHandle(), windowWidth, windowHeight);
+			glfwSetWindowPos(window.getWindow(), windowPosX, windowPosY);
+			glfwSetWindowSize(window.getWindow(), windowWidth, windowHeight);
 			if(windowWasMaximized) {
-				glfwMaximizeWindow(window.getHandle());
+				glfwMaximizeWindow(window.getWindow());
 			}
 		}else if(borderless && !optimizations) {
 			FullscreenFix.print("Change to Borderless Fullscreen without Fullscreen optimizations");
@@ -82,7 +82,7 @@ public class Win32Util {
 			
 			MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
 			GLFWUtil.enableFullscreen(window, monitor);
-			glfwSetWindowAttrib(window.getHandle(), GLFW_AUTO_ICONIFY, 0);
+			glfwSetWindowAttrib(window.getWindow(), GLFW_AUTO_ICONIFY, 0);
 			
 			SetWindowPos(hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 			setWindowStyle(hwnd, WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SYSMENU | WS_GROUP);
@@ -97,11 +97,11 @@ public class Win32Util {
 			}
 
 			setDefaultWindowStyle(window, hwnd);
-			glfwSetWindowAttrib(window.getHandle(), GLFW_DECORATED, 0);
+			glfwSetWindowAttrib(window.getWindow(), GLFW_DECORATED, 0);
 			
 			MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
-			glfwSetWindowPos(window.getHandle(), monitor.posX, monitor.posY);
-			glfwSetWindowSize(window.getHandle(), monitor.width, monitor.height);
+			glfwSetWindowPos(window.getWindow(), monitor.posX, monitor.posY);
+			glfwSetWindowSize(window.getWindow(), monitor.width, monitor.height);
 			
 			FullscreenFix.LAST_FULLSCREEN_MONITOR.set(monitor);
 		}else {
@@ -111,7 +111,7 @@ public class Win32Util {
 			GLFWUtil.disableFullscreen(window, windowPosX, windowPosY, windowWidth, windowHeight);
 			
 			setDefaultWindowStyle(window, hwnd);
-			glfwSetWindowAttrib(window.getHandle(), GLFW_AUTO_ICONIFY, FullscreenFix.AUTO_MINIMIZE.getBoolean() ? 1 : 0);
+			glfwSetWindowAttrib(window.getWindow(), GLFW_AUTO_ICONIFY, FullscreenFix.AUTO_MINIMIZE.getBoolean() ? 1 : 0);
 			
 			MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
 			GLFWUtil.enableFullscreen(window, monitor);
@@ -123,7 +123,7 @@ public class Win32Util {
 	}
 	
 	public static void setDefaultWindowStyle(Window window, long hwnd) {
-		glfwSetWindowAttrib(window.getHandle(), GLFW_DECORATED, 1);
+		glfwSetWindowAttrib(window.getWindow(), GLFW_DECORATED, 1);
 		
 		long style = WS_VISIBLE;
 		

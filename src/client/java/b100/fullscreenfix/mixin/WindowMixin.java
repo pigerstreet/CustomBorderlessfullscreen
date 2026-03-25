@@ -17,8 +17,8 @@ import b100.fullscreenfix.MonitorInfo;
 import b100.fullscreenfix.VideoMode;
 import b100.fullscreenfix.util.GLFWUtil;
 import b100.fullscreenfix.util.Win32Util;
-import net.minecraft.client.util.MonitorTracker;
-import net.minecraft.client.util.Window;
+import com.mojang.blaze3d.platform.ScreenManager;
+import com.mojang.blaze3d.platform.Window;
 
 @Mixin(value = Window.class)
 public abstract class WindowMixin {
@@ -26,13 +26,13 @@ public abstract class WindowMixin {
 	@Shadow
 	private boolean fullscreen;
 	@Shadow
-	private MonitorTracker monitorTracker;
+	private ScreenManager screenManager;
 	
 	private boolean wasFullscreen = false;
 	private boolean initialized = false;
 	
 	private boolean fullscreenModeHasChanged = false;
-	private net.minecraft.client.util.VideoMode newFullscreenMode;
+	private com.mojang.blaze3d.platform.VideoMode newFullscreenMode;
 
 	private boolean isMaximized = false;
 	
@@ -65,27 +65,27 @@ public abstract class WindowMixin {
 		// Center Window
 		int[] i = new int[1];
 		int[] j = new int[1];
-		glfwGetWindowSize(getHandle(), i, j);
+		glfwGetWindowSize(getWindow(), i, j);
 		int width = i[0];
 		int height = j[0];
 		MonitorInfo monitor = new MonitorInfo(glfwGetPrimaryMonitor());
 		int x = (monitor.width - width) / 2;
 		int y = (monitor.height - height) / 2;
-		glfwSetWindowPos(getHandle(), x, y);
+		glfwSetWindowPos(getWindow(), x, y);
 		this.windowPosX = x;
 		this.windowPosY = y;
 		this.windowWidth = width;
 		this.windowHeight = height;
 		
-		glfwShowWindow(getHandle());
+		glfwShowWindow(getWindow());
 		initialized = true;
 		
-		glfwSetWindowMaximizeCallback(getHandle(), (window, maximized) -> {
+		glfwSetWindowMaximizeCallback(getWindow(), (window, maximized) -> {
 			isMaximized = maximized;
 		});
 	}
 	
-	@Inject(method = "swapBuffers", at = @At(value = "TAIL"))
+	@Inject(method = "updateDisplay", at = @At(value = "TAIL"))
 	private void onSwapBuffers(CallbackInfo ci) {
 		if(FullscreenFix.windowNeedsUpdate) {
 			FullscreenFix.windowNeedsUpdate = false;
@@ -93,7 +93,7 @@ public abstract class WindowMixin {
 		}
 	}
 	
-	@Inject(method = "updateWindowRegion", at = @At(value = "HEAD"), cancellable = true)
+	@Inject(method = "setMode", at = @At(value = "HEAD"), cancellable = true)
 	private void onUpdateWindowRegion(CallbackInfo ci) {
 		FullscreenFix.debugPrint("Update Window Region");
 		
@@ -120,7 +120,7 @@ public abstract class WindowMixin {
 			windowMaximized = isMaximized;
 			
 			if(!isMaximized) {
-				final long handle = getHandle();
+				final long handle = getWindow();
 				
 				int[] i = new int[1];
 				int[] j = new int[1];
@@ -164,7 +164,7 @@ public abstract class WindowMixin {
 		}
 		
 		final Window window = (Window)(Object)this;
-		final long handle = getHandle();
+		final long handle = getWindow();
 		
 		if(Global.OS_WINDOWS) {
 			Win32Util.updateWindowState(window, windowPosX, windowPosY, windowWidth, windowHeight, windowMaximized, firstUpdate);
@@ -179,7 +179,7 @@ public abstract class WindowMixin {
 			FullscreenFix.print("Change to Fullscreen with custom resolution");
 			
 			MonitorInfo monitorInfo = new MonitorInfo(fullscreenMode.monitor);
-			glfwSetWindowMonitor(window.getHandle(), 
+			glfwSetWindowMonitor(window.getWindow(), 
 					fullscreenMode.monitor,
 					monitorInfo.posX,
 					monitorInfo.posY,
@@ -226,8 +226,8 @@ public abstract class WindowMixin {
 		GLFWUtil.updateCursorMode();
 	}
 	
-	@Inject(method = "setFullscreenVideoMode", at = @At("HEAD"), cancellable = true)
-	private void onSetFullscreenVideoMode(Optional<net.minecraft.client.util.VideoMode> optional, CallbackInfo ci) {
+	@Inject(method = "setPreferredFullscreenVideoMode", at = @At("HEAD"), cancellable = true)
+	private void onSetFullscreenVideoMode(Optional<com.mojang.blaze3d.platform.VideoMode> optional, CallbackInfo ci) {
 		FullscreenFix.print("Set Fullscreen Mode: " + optional);
 		
 		// This is called when the slider in the options menu is clicked.
@@ -237,6 +237,6 @@ public abstract class WindowMixin {
 	}
 	
 	@Shadow
-	public abstract long getHandle();
+	public abstract long getWindow();
 	
 }

@@ -3,7 +3,7 @@ package b100.fullscreenfix;
 import net.caffeinemc.mods.sodium.client.gui.options.OptionImpl;
 import net.caffeinemc.mods.sodium.client.gui.options.control.CyclingControl;
 import net.caffeinemc.mods.sodium.client.gui.options.storage.OptionStorage;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class SodiumCompat {
 	
@@ -12,8 +12,8 @@ public class SodiumCompat {
 	public static OptionImpl<Object, FullscreenMode> getCustomFullscreenButton() {
 		return OptionImpl.createBuilder(FullscreenMode.class, optionStorage)
 				.setName(FullscreenFix.TRANS.asText("option.fullscreen"))
-				.setTooltip(Text.translatable("sodium.options.fullscreen.tooltip"))
-				.setControl(option1 -> new CyclingControl<>(option1, FullscreenMode.class, new Text[] {
+				.setTooltip(Component.translatable("sodium.options.fullscreen.tooltip"))
+				.setControl(option1 -> new CyclingControl<>(option1, FullscreenMode.class, new Component[] {
 					FullscreenFix.TRANS.asText("option.fullscreen.off"),
 					FullscreenFix.TRANS.asText("option.fullscreen.on"),
 					FullscreenFix.TRANS.asText("option.fullscreen.borderless")

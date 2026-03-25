@@ -5,7 +5,17 @@ import static b100.fullscreenfix.Global.*;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
+import net.minecraft.Util;
+import net.minecraft.Util.OS;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.OptionInstance;
+import net.minecraft.client.OptionInstance.TooltipSupplier;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import com.mojang.blaze3d.platform.Window;
 import com.mojang.serialization.Codec;
 
 import b100.fullscreenfix.gui.ConfigScreen;
@@ -18,17 +28,6 @@ import b100.lib.config.property.BooleanProperty;
 import b100.lib.config.property.BooleanPropertyImpl;
 import b100.lib.config.property.Property;
 import b100.lib.translate.Translations;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.option.GameOptions;
-import net.minecraft.client.option.SimpleOption;
-import net.minecraft.client.option.SimpleOption.TooltipFactory;
-import net.minecraft.client.util.Window;
-import net.minecraft.text.Text;
-import net.minecraft.util.Util;
-import net.minecraft.util.Util.OperatingSystem;
-import net.minecraft.util.math.MathHelper;
 
 public class FullscreenFix {
 	
@@ -101,10 +100,10 @@ public class FullscreenFix {
 	/**
 	 * Custom option for the vanilla video settings menu
 	 */
-	public static SimpleOption<Integer> fullscreenOption = createFullscreenOption();
+	public static OptionInstance<Integer> fullscreenOption = createFullscreenOption();
 	
 	public static boolean getBorderlessFullscreenDefaultValue() {
-		if(Util.getOperatingSystem() == OperatingSystem.LINUX) {
+		if(Util.getPlatform() == OS.LINUX) {
 			return false;
 		}
 		return true;
@@ -122,7 +121,7 @@ public class FullscreenFix {
 	
 	@SuppressWarnings("resource")
 	public static void openConfigScreen() {
-		IScreen currentScreen = (IScreen) MinecraftClient.getInstance().currentScreen;
+		IScreen currentScreen = (IScreen) Minecraft.getInstance().screen;
 		if(!(currentScreen instanceof ConfigScreen)) {
 			GuiUtils.instance.setScreen(new ConfigScreen(null));	
 		}
@@ -141,9 +140,9 @@ public class FullscreenFix {
 		WindowAccess access = (WindowAccess)(Object)window;
 		access.setFullscreen(value);
 
-		SimpleOption<Boolean> fullscreenOption = getVanillaFullscreenOption();
+		OptionInstance<Boolean> fullscreenOption = getVanillaFullscreenOption();
 		if(fullscreenOption != null) {
-			fullscreenOption.setValue(value);
+			fullscreenOption.set(value);
 		}
 	}
 	public static void updateWindow() {
@@ -156,15 +155,15 @@ public class FullscreenFix {
 	
 	////////////////////////////////////
 	
-	private static SimpleOption<Integer> createFullscreenOption() {
-		return new SimpleOption<Integer>("fullscreenoverride",
-				SimpleOption.emptyTooltip(),
-				(text, value) -> Text.of("idkwhatthisdoes"),
-				new SimpleOption.Callbacks<>() {
+	private static OptionInstance<Integer> createFullscreenOption() {
+		return new OptionInstance<Integer>("fullscreenoverride",
+				OptionInstance.noTooltip(),
+				(text, value) -> Component.nullToEmpty("idkwhatthisdoes"),
+				new OptionInstance.ValueSet<>() {
 					@Override
-					public Function<SimpleOption<Integer>, ClickableWidget> getWidgetCreator(TooltipFactory<Integer> tooltipFactory, GameOptions gameOptions, int x, int y, int width, Consumer<Integer> changeCallback) {
+					public Function<OptionInstance<Integer>, AbstractWidget> createButton(TooltipSupplier<Integer> tooltipFactory, Options gameOptions, int x, int y, int width, Consumer<Integer> changeCallback) {
 						return option -> {
-							final ButtonWidget button = ButtonWidget.builder(getFullscreenModeDisplayText(), (pressedButton) -> {
+							final Button button = Button.builder(getFullscreenModeDisplayText(), (pressedButton) -> {
 								setFullscreenMode(getCurrentFullscreenMode().next());
 								pressedButton.setMessage(getFullscreenModeDisplayText());
 							}).build();
@@ -172,8 +171,8 @@ public class FullscreenFix {
 						};
 					}
 					@Override
-					public Optional<Integer> validate(Integer value) {
-						return Optional.of(MathHelper.clamp(value, 0, 2));
+					public Optional<Integer> validateValue(Integer value) {
+						return Optional.of(Mth.clamp(value, 0, 2));
 					}
 					@Override
 					public Codec<Integer> codec() {
@@ -183,7 +182,7 @@ public class FullscreenFix {
 		);
 	}
 	
-	private static Text getFullscreenModeDisplayText() {
+	private static Component getFullscreenModeDisplayText() {
 		FullscreenMode mode = getCurrentFullscreenMode();
 		StringBuilder str = new StringBuilder();
 		str.append(TRANS.asString("option.fullscreen")).append(": ");
@@ -194,7 +193,7 @@ public class FullscreenFix {
 		}else {
 			str.append(TRANS.asString("option.fullscreen.off"));
 		}
-		return Text.of(str.toString());
+		return Component.nullToEmpty(str.toString());
 	}
 	
 	public static FullscreenMode getCurrentFullscreenMode() {
@@ -222,9 +221,9 @@ public class FullscreenFix {
 	}
 	
 	@SuppressWarnings("resource")
-	public static SimpleOption<Boolean> getVanillaFullscreenOption() {
+	public static OptionInstance<Boolean> getVanillaFullscreenOption() {
 		try {
-			return MinecraftClient.getInstance().options.getFullscreen();	
+			return Minecraft.getInstance().options.fullscreen();	
 		}catch (NullPointerException e) {
 			return null;
 		}

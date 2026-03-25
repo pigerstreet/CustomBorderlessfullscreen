@@ -13,7 +13,7 @@ import b100.lib.client.gui.element.GuiElement;
 import b100.lib.client.gui.screen.GuiScrollListScreen;
 import b100.lib.client.mixin.IScreen;
 import b100.lib.client.util.UpdateMode;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class ConfigScreen extends GuiScrollListScreen {
 	
@@ -60,7 +60,7 @@ public class ConfigScreen extends GuiScrollListScreen {
 			
 			fullscreenResolutionButton = scrollList.add(new CustomOptionElement<>(this, "option.fullscreenResolution", FullscreenFix.FULLSCREEN_VIDEO_MODE.get())
 			.addActionListener((e) -> utils.setScreen(new ScreenResolutionsMenu(this)))
-			.setToTextFunction((videoMode) -> videoMode != null ? Text.of(videoMode.toString()) : FullscreenFix.TRANS.asText("value.fullscreenResolution.default")));
+			.setToTextFunction((videoMode) -> videoMode != null ? Component.literal(videoMode.toString()) : FullscreenFix.TRANS.asText("value.fullscreenResolution.default")));
 
 			scrollList.add(BooleanToggleElement.create(this, "option.replaceVideoSettings", FullscreenFix.REPLACE_VIDEO_SETTINGS_BUTTON, UpdateMode.ON_SAVE));
 			scrollList.add(BooleanToggleElement.create(this, "option.configScreenHotkeyEnabled", FullscreenFix.CONFIG_SCREEN_HOTKEY_ENABLED, UpdateMode.ON_SAVE));

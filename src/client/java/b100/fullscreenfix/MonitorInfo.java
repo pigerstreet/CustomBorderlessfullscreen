@@ -9,7 +9,7 @@ import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVidMode;
 
 import b100.lib.util.ConfigStringifiable;
-import net.minecraft.client.util.Window;
+import com.mojang.blaze3d.platform.Window;
 
 public class MonitorInfo implements ConfigStringifiable {
 	
@@ -23,7 +23,7 @@ public class MonitorInfo implements ConfigStringifiable {
 				FullscreenFix.debugPrint("No last fullscreen monitor to use!");
 			}
 		}
-		return getMonitor(window.getHandle());
+		return getMonitor(window.getWindow());
 	}
 
 	public static MonitorInfo getMonitor(long window) {

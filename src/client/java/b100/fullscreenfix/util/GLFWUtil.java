@@ -4,28 +4,27 @@ import static org.lwjgl.glfw.GLFW.*;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import net.minecraft.client.Minecraft;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.glfw.GLFWVidMode;
 
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.MonitorInfo;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.VideoMode;
-import net.minecraft.client.util.Window;
+import com.mojang.blaze3d.platform.VideoMode;
+import com.mojang.blaze3d.platform.Window;
 
 public class GLFWUtil {
 	
 	public static void enableFullscreen(Window window, MonitorInfo monitor) {
-		glfwSetWindowMonitor(window.getHandle(), monitor.handle, monitor.posX, monitor.posY, monitor.width, monitor.height, monitor.refreshRate);
+		glfwSetWindowMonitor(window.getWindow(), monitor.handle, monitor.posX, monitor.posY, monitor.width, monitor.height, monitor.refreshRate);
 	}
 	
 	public static void disableFullscreen(Window window, int x, int y, int w, int h) {
-		glfwSetWindowMonitor(window.getHandle(), 0L, x, y, w, h, 0);
+		glfwSetWindowMonitor(window.getWindow(), 0L, x, y, w, h, 0);
 	}
 	
 	public static boolean isFullscreen(Window window) {
-		return glfwGetWindowMonitor(window.getHandle()) != 0L;
+		return glfwGetWindowMonitor(window.getWindow()) != 0L;
 	}
 	
 	public static List<Long> getMonitors() {
@@ -95,11 +94,11 @@ public class GLFWUtil {
 	}
 	
 	public static void updateCursorMode() {
-		Window window = MinecraftClient.getInstance().getWindow();
+		Window window = Minecraft.getInstance().getWindow();
 		if(window == null) {
 			return;
 		}
-		long windowHandle = window.getHandle();
+		long windowHandle = window.getWindow();
 		
 		int cursorMode = glfwGetInputMode(windowHandle, GLFW_CURSOR);
 		final int prevCursorMode = cursorMode;

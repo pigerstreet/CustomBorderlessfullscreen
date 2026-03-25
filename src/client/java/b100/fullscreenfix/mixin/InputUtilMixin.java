@@ -6,13 +6,13 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.util.GLFWUtil;
-import net.minecraft.client.util.InputUtil;
+import com.mojang.blaze3d.platform.InputConstants;
 
-@Mixin(value = InputUtil.class)
+@Mixin(value = InputConstants.class)
 public class InputUtilMixin {
 	
 	@ModifyArg(
-		method = "setCursorParameters",
+		method = "grabOrReleaseMouse",
 		at = @At(
 			value = "INVOKE",
 			target = "Lorg/lwjgl/glfw/GLFW;glfwSetInputMode(JII)V"

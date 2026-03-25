@@ -5,20 +5,19 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-
+import com.mojang.blaze3d.platform.Window;
+import net.minecraft.client.KeyboardHandler;
+import net.minecraft.client.gui.screens.Screen;
 import b100.fullscreenfix.FullscreenFix;
-import net.minecraft.client.Keyboard;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.util.Window;
 
-@Mixin(value = Keyboard.class)
+@Mixin(value = KeyboardHandler.class)
 public class KeyboardMixin {
 	
 	@WrapOperation(
-		method = "onKey",
+		method = "keyPress",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/client/util/Window;toggleFullscreen()V"
+			target = "Lcom/mojang/blaze3d/platform/Window;toggleFullScreen()V"
 		)
 	)
 	private void openMenuInsteadOfTogglingFullscreen(Window instance, Operation<Void> original) {
