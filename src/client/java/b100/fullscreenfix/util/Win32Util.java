@@ -25,9 +25,10 @@ public class Win32Util {
 	}
 	
 	public static void updateWindowState(Window window, int windowPosX, int windowPosY, int windowWidth, int windowHeight, boolean windowWasMaximized, boolean firstUpdate) {
-		boolean fullscreen = window.isFullscreen();
-		boolean borderless = FullscreenFix.BORDERLESS_FULLSCREEN.getBoolean();
-		boolean optimizations = FullscreenFix.FULLSCREEN_OPTIMIZATIONS.getBoolean();
+		final boolean fullscreen = window.isFullscreen();
+		final boolean exclusive = FullscreenFix.EXCLUSIVE_FULLSCREEN.getBoolean();
+		final boolean autoMinimize = FullscreenFix.AUTO_MINIMIZE.getBoolean();
+		
 		VideoMode fullscreenMode = FullscreenFix.FULLSCREEN_VIDEO_MODE.get();
 		
 		long hwnd = getWin32Handle(window);
@@ -71,7 +72,7 @@ public class Win32Util {
 			if(windowWasMaximized) {
 				glfwMaximizeWindow(window.getWindow());
 			}
-		}else if(borderless && !optimizations) {
+		}else if(!exclusive) {
 			FullscreenFix.print("Change to Borderless Fullscreen without Fullscreen optimizations");
 			
 			// Disable fullscreen and then enable again, otherwise switching from custom resolution fullscreen won't work
@@ -89,7 +90,7 @@ public class Win32Util {
 			setWindowExtendedStyle(hwnd, WS_EX_APPWINDOW | WS_EX_ACCEPTFILES | WS_EX_COMPOSITED | WS_EX_LAYERED);
 			
 			FullscreenFix.LAST_FULLSCREEN_MONITOR.set(monitor);
-		}else if(borderless && optimizations) {
+		}else if(exclusive && !autoMinimize) {
 			FullscreenFix.print("Change to Borderless Fullscreen with Fullscreen optimizations");
 			
 			if(GLFWUtil.isFullscreen(window)) {
@@ -111,7 +112,7 @@ public class Win32Util {
 			GLFWUtil.disableFullscreen(window, windowPosX, windowPosY, windowWidth, windowHeight);
 			
 			setDefaultWindowStyle(window, hwnd);
-			glfwSetWindowAttrib(window.getWindow(), GLFW_AUTO_ICONIFY, FullscreenFix.AUTO_MINIMIZE.getBoolean() ? 1 : 0);
+			glfwSetWindowAttrib(window.getWindow(), GLFW_AUTO_ICONIFY, autoMinimize ? 1 : 0);
 			
 			MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
 			GLFWUtil.enableFullscreen(window, monitor);

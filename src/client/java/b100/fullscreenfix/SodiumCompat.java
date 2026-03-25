@@ -15,7 +15,7 @@ public class SodiumCompat {
 				.setTooltip(Component.translatable("sodium.options.fullscreen.tooltip"))
 				.setControl(option1 -> new CyclingControl<>(option1, FullscreenMode.class, new Component[] {
 					FullscreenFix.TRANS.asText("option.fullscreen.off"),
-					FullscreenFix.TRANS.asText("option.fullscreen.on"),
+					FullscreenFix.TRANS.asText("option.fullscreen.exclusive"),
 					FullscreenFix.TRANS.asText("option.fullscreen.borderless")
 				}))
 				.setBinding((options, value) -> FullscreenFix.setFullscreenMode(value), (options) -> FullscreenFix.getCurrentFullscreenMode())
