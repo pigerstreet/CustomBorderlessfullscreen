@@ -2,15 +2,15 @@
 	"schemaVersion": 1,
 	"id": "fullscreenfix",
 	"version": "${version}",
-	"name": "Better Fullscreen",
+	"name": "Borderless Fullscreen",
 	"description": "More configurable fullscreen mode",
 	"authors": [
 		"Bestsoft100"
 	],
 	"contact": {
-		"homepage": "https://modrinth.com/project/better-fullscreen",
-		"sources": "https://github.com/Bestsoft101/Better-Fullscreen",
-		"issues": "https://github.com/Bestsoft101/Better-Fullscreen/issues"
+		"homepage": "https://modrinth.com/project/borderless-fullscreen",
+		"sources": "https://github.com/Bestsoft101/Borderless-Fullscreen",
+		"issues": "https://github.com/Bestsoft101/Borderless-Fullscreen/issues"
 	},
 	"license": "GPL-3.0",
 	"icon": "assets/fullscreenfix/icon.png",
@@ -36,8 +36,8 @@
 	"custom": {
 		"modmenu": {
 			"links": {
-				"modmenu.modrinth": "https://modrinth.com/project/better-fullscreen",
-				"modmenu.curseforge": "https://www.curseforge.com/minecraft/mc-mods/better-fullscreen"
+				"modmenu.modrinth": "https://modrinth.com/project/borderless-fullscreen",
+				"modmenu.curseforge": "https://www.curseforge.com/minecraft/mc-mods/borderless-fullscreen"
 			}
 		}
 	}
