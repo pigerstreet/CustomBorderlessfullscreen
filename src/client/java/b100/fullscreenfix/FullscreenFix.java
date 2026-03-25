@@ -42,8 +42,8 @@ public class FullscreenFix {
 	public static final PropertiesFile CONFIG = new PropertiesFile(Global.CONFIG_FILE);
 	
 	public static final BooleanProperty ENABLE_NEXT_LAUNCH = BooleanProperty.create(Global.MOD_ENABLED);
-	public static final BooleanProperty FULLSCREEN = BooleanProperty.create(false, FullscreenFix::isFullscreenEnabled, FullscreenFix::setFullscreen);
-	public static final BooleanProperty BORDERLESS_FULLSCREEN = new BooleanPropertyImpl(getBorderlessFullscreenDefaultValue()) {
+	public static final BooleanProperty ENABLE_FULLSCREEN = BooleanProperty.create(false, FullscreenFix::isFullscreenEnabled, FullscreenFix::setFullscreen);
+	public static final BooleanProperty EXCLUSIVE_FULLSCREEN = new BooleanPropertyImpl(getExclusiveFullscreenDefaultValue()) {
 		@Override
 		public void setBoolean(boolean value) {
 			if(value != getBoolean()) {
@@ -51,15 +51,6 @@ public class FullscreenFix {
 				updateWindow();
 			}
 		}
-	};
-	public static final BooleanProperty FULLSCREEN_OPTIMIZATIONS = new BooleanPropertyImpl(true) {
-		@Override
-		public void setBoolean(boolean value) {
-			if(value != getBoolean()) {
-				super.setBoolean(value);
-				updateWindow();
-			}
-		};
 	};
 	public static final BooleanProperty AUTO_MINIMIZE = new BooleanPropertyImpl(true) {
 		@Override
@@ -88,8 +79,7 @@ public class FullscreenFix {
 	
 	static {
 		CONFIG.add("enableMod", ENABLE_NEXT_LAUNCH);
-		CONFIG.add("borderlessFullscreen", BORDERLESS_FULLSCREEN);
-		CONFIG.add("fullscreenOptimizations", FULLSCREEN_OPTIMIZATIONS);
+		CONFIG.add("exclusiveFullscreen", EXCLUSIVE_FULLSCREEN);
 		CONFIG.add("autoMinimize", AUTO_MINIMIZE);
 		CONFIG.add("startInFullscreen", START_IN_FULLSCREEN);
 		CONFIG.add("replaceVideoSettingsButton", REPLACE_VIDEO_SETTINGS_BUTTON);
@@ -104,11 +94,11 @@ public class FullscreenFix {
 	 */
 	public static OptionInstance<Integer> fullscreenOption = createFullscreenOption();
 	
-	public static boolean getBorderlessFullscreenDefaultValue() {
+	public static boolean getExclusiveFullscreenDefaultValue() {
 		if(Util.getPlatform() == OS.LINUX) {
-			return false;
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	////////////////////////////////////
@@ -121,7 +111,6 @@ public class FullscreenFix {
 
 	////////////////////////////////////
 	
-	@SuppressWarnings("resource")
 	public static void openConfigScreen() {
 		IScreen currentScreen = (IScreen) Minecraft.getInstance().screen;
 		if(!(currentScreen instanceof ConfigScreen)) {
@@ -186,24 +175,26 @@ public class FullscreenFix {
 	
 	private static Component getFullscreenModeDisplayText() {
 		FullscreenMode mode = getCurrentFullscreenMode();
+		
 		StringBuilder str = new StringBuilder();
 		str.append(TRANS.asString("option.fullscreen")).append(": ");
 		if(mode == FullscreenMode.BORDERLESS) {
 			str.append(TRANS.asString("option.fullscreen.borderless"));
-		}else if(mode == FullscreenMode.ON) {
-			str.append(TRANS.asString("option.fullscreen.on"));
+		}else if(mode == FullscreenMode.EXCLUSIVE) {
+			str.append(TRANS.asString("option.fullscreen.exclusive"));
 		}else {
 			str.append(TRANS.asString("option.fullscreen.off"));
 		}
-		return Component.nullToEmpty(str.toString());
+		
+		return Component.literal(str.toString());
 	}
 	
 	public static FullscreenMode getCurrentFullscreenMode() {
 		if(isFullscreenEnabled()) {
-			if(BORDERLESS_FULLSCREEN.getBoolean()) {
-				return FullscreenMode.BORDERLESS;
+			if(EXCLUSIVE_FULLSCREEN.getBoolean()) {
+				return FullscreenMode.EXCLUSIVE;
 			}
-			return FullscreenMode.ON;
+			return FullscreenMode.BORDERLESS;
 		}
 		return FullscreenMode.OFF;
 	}
@@ -213,16 +204,15 @@ public class FullscreenFix {
 			setFullscreen(false);
 		}else {
 			setFullscreen(true);
-			if(mode == FullscreenMode.BORDERLESS) {
-				BORDERLESS_FULLSCREEN.setBoolean(true);
+			if(mode == FullscreenMode.EXCLUSIVE) {
+				EXCLUSIVE_FULLSCREEN.setBoolean(true);
 			}else {
-				BORDERLESS_FULLSCREEN.setBoolean(false);
+				EXCLUSIVE_FULLSCREEN.setBoolean(false);
 			}
 		}
 		fullscreenModeWasChanged = true;
 	}
 	
-	@SuppressWarnings("resource")
 	public static OptionInstance<Boolean> getVanillaFullscreenOption() {
 		try {
 			return Minecraft.getInstance().options.fullscreen();	

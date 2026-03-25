@@ -2,7 +2,7 @@ package b100.fullscreenfix;
 
 public enum FullscreenMode {
 	OFF,
-	ON,
+	EXCLUSIVE,
 	BORDERLESS;
 	
 	public FullscreenMode next() {
@@ -19,7 +19,7 @@ public enum FullscreenMode {
 	
 	public static int getId(FullscreenMode mode) {
 		if(mode == BORDERLESS) return 2;
-		if(mode == ON) return 1;
+		if(mode == EXCLUSIVE) return 1;
 		return 0;
 	}
 	

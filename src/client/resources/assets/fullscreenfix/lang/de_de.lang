@@ -5,12 +5,11 @@ button.apply=Übernehmen
 
 option.enableMod=Mod Aktivieren (Benötigt Neustart)
 option.fullscreen=Vollbild
+option.enableFullscreen=Vollbild aktivieren
 option.fullscreen.borderless=Randlos
-option.fullscreen.on=An
+option.fullscreen.exclusive=Exklusiv
 option.fullscreen.off=Aus
-option.borderlessFullscreen=Randloser Vollbild
-option.windowsFullscreenOptimizations=Windows Vollbildoptimierungen
-option.windowsFullscreenOptimizations.tooltip=Vollbildoptimierungen ist ein Windows 10 Feature das im Vollbildmodus die Leistung verbessert und Eingabeverzögerung reduziert, Es kann jedoch Probleme mit Bildschirmaufnahmeprogrammen verursachen. Um Vollbildoptimierungen zu deaktivieren muss der randlose Vollbildmodus aktiviert sein.
+option.exclusiveFullscreen=Exklusiver Vollbildmodus
 option.autoMinimize=Minimieren bei Fokusverlust
 option.autoMinimize.tooltip=Diese Option funktioniert nur wenn der randlose Vollbildmodus deaktiviert ist.
 option.fullscreenResolution=Vollbildauflösung

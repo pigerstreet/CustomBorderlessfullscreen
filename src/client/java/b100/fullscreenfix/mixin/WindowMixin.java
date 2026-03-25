@@ -175,7 +175,10 @@ public abstract class WindowMixin {
 		
 		glfwHideWindow(handle);
 
-		VideoMode fullscreenMode = FullscreenFix.FULLSCREEN_VIDEO_MODE.get();
+		final VideoMode fullscreenMode = FullscreenFix.FULLSCREEN_VIDEO_MODE.get();
+		final boolean exclusive = FullscreenFix.EXCLUSIVE_FULLSCREEN.getBoolean();
+		final boolean autoMinimize = FullscreenFix.AUTO_MINIMIZE.getBoolean();
+		
 		if(fullscreen && fullscreenMode != null) {
 			FullscreenFix.print("Change to Fullscreen with custom resolution");
 			
@@ -188,10 +191,10 @@ public abstract class WindowMixin {
 					fullscreenMode.vidMode.height(),
 					fullscreenMode.vidMode.refreshRate()
 			);
-		}else if(fullscreen && !FullscreenFix.BORDERLESS_FULLSCREEN.getBoolean()) {
-			FullscreenFix.print("Change to Fullscreen");
+		}else if(fullscreen && exclusive) {
+			FullscreenFix.print("Change to GLFW Fullscreen");
 			
-			glfwSetWindowAttrib(handle, GLFW_AUTO_ICONIFY, FullscreenFix.AUTO_MINIMIZE.getBoolean() ? 1 : 0);
+			glfwSetWindowAttrib(handle, GLFW_AUTO_ICONIFY, autoMinimize ? 1 : 0);
 			
 			MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
 			GLFWUtil.enableFullscreen(window, monitor);
@@ -202,7 +205,7 @@ public abstract class WindowMixin {
 				GLFWUtil.disableFullscreen(window, windowPosX, windowPosY, windowWidth, windowHeight);	
 			}
 			
-			if(fullscreen && FullscreenFix.BORDERLESS_FULLSCREEN.getBoolean()) {
+			if(fullscreen) {
 				FullscreenFix.print("Change to Borderless Fullscreen");
 				
 				MonitorInfo monitor = MonitorInfo.getMonitor(window, firstUpdate);
