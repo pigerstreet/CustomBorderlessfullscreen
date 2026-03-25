@@ -31,7 +31,7 @@
 		"fabricloader": ">=0.18.4",
 		"minecraft": "26.1",
 		"java": ">=25",
-		"b100lib": ">=0.2.2 <0.3"
+		"b100lib": ">=0.2.3 <0.3"
 	},
 	"custom": {
 		"modmenu": {

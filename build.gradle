@@ -54,8 +54,7 @@ dependencies {
     implementation("maven.modrinth:sodium:${project.sodium_version}")
 	
 	// B100Lib
-    // include(modImplementation("maven.modrinth:b100lib:${project.b100lib_version}"))
-	implementation(files("b100lib-0.2.3.jar"))
+	include(implementation("maven.modrinth:b100lib:${project.b100lib_version}"))
 }
 
 processResources {
