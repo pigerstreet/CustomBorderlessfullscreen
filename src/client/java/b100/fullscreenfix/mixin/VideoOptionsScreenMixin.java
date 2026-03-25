@@ -1,5 +1,8 @@
 package b100.fullscreenfix.mixin;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,17 +26,26 @@ public abstract class VideoOptionsScreenMixin extends OptionsSubScreen {
 	}
 	
 	@ModifyArg(method = "addOptions", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/OptionsList;addSmall([Lnet/minecraft/client/OptionInstance;)V"), index = 0)
-	private OptionInstance<?>[] replaceFullscreenOption(OptionInstance<?>[] options) {
-		if(FullscreenFix.REPLACE_VIDEO_SETTINGS_BUTTON.getBoolean()) {
-			OptionInstance<?> fullscreenOption = FullscreenFix.getVanillaFullscreenOption();
-			for(int i=0; i < options.length; i++) {
-				OptionInstance<?> option = options[i];
+	private OptionInstance<?>[] removeExclusiveFullscreenOption(OptionInstance<?>[] options) {
+		List<OptionInstance<?>> newOptions = new ArrayList<>();
+		
+		OptionInstance<?> fullscreenOption = FullscreenFix.getVanillaFullscreenOption();
+		OptionInstance<?> exclusiveFullscreenOption = FullscreenFix.getVanillaExclusiveFullscreenOption();
+		
+		for(int i=0; i < options.length; i++) {
+			OptionInstance<?> option = options[i];
+			if(option == exclusiveFullscreenOption) {
+				continue;
+			}
+			if(FullscreenFix.REPLACE_VIDEO_SETTINGS_BUTTON.getBoolean()) {
 				if(option == fullscreenOption) {
-					options[i] = FullscreenFix.fullscreenOption;
+					option = FullscreenFix.fullscreenOption;
 				}
-			}	
+			}
+			newOptions.add(option);
 		}
-		return options;
+		
+		return newOptions.toArray(OptionInstance<?>[]::new);
 	}
 	
 	@Inject(method = "onClose", at = @At(value = "TAIL"))

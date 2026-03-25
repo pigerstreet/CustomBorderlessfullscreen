@@ -213,6 +213,14 @@ public class FullscreenFix {
 		fullscreenModeWasChanged = true;
 	}
 	
+	public static OptionInstance<Boolean> getVanillaExclusiveFullscreenOption() {
+		try {
+			return Minecraft.getInstance().options.exclusiveFullscreen();	
+		}catch (NullPointerException e) {
+			return null;
+		}
+	}
+	
 	public static OptionInstance<Boolean> getVanillaFullscreenOption() {
 		try {
 			return Minecraft.getInstance().options.fullscreen();	
@@ -220,6 +228,7 @@ public class FullscreenFix {
 			return null;
 		}
 	}
+	
 	////////////////////////////////////
 	
 	public static void debugPrint(String string) {
