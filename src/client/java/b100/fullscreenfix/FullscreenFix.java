@@ -20,6 +20,7 @@ import b100.lib.config.property.BooleanProperty;
 import b100.lib.config.property.BooleanPropertyImpl;
 import b100.lib.config.property.Property;
 import b100.lib.translate.Translations;
+import net.caffeinemc.mods.sodium.client.gui.SodiumConfigBuilder.FullscreenMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.OptionInstance;
 import net.minecraft.client.OptionInstance.TooltipSupplier;
@@ -155,7 +156,7 @@ public class FullscreenFix {
 					public Function<OptionInstance<Integer>, AbstractWidget> createButton(TooltipSupplier<Integer> tooltipFactory, Options gameOptions, int x, int y, int width, Consumer<Integer> changeCallback) {
 						return option -> {
 							final Button button = Button.builder(getFullscreenModeDisplayText(), (pressedButton) -> {
-								setFullscreenMode(getCurrentFullscreenMode().next());
+								setFullscreenMode(nextFullscreenMode(getCurrentFullscreenMode()));
 								pressedButton.setMessage(getFullscreenModeDisplayText());
 							}).build();
 							return button;
@@ -171,6 +172,15 @@ public class FullscreenFix {
 					}
 				}, 0, (newValue) -> {}
 		);
+	}
+	
+	private static FullscreenMode nextFullscreenMode(FullscreenMode mode) {
+		if(mode == FullscreenMode.EXCLUSIVE) {
+			return FullscreenMode.BORDERLESS;
+		}else if(mode == FullscreenMode.BORDERLESS) {
+			return FullscreenMode.OFF;
+		}
+		return FullscreenMode.EXCLUSIVE;
 	}
 	
 	private static Component getFullscreenModeDisplayText() {
