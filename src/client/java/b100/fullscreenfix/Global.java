@@ -37,7 +37,7 @@ public class Global {
 				enabled.setValue(value.equalsIgnoreCase("true"));
 			}
 		}, ':');
-		return enabled.getValue();
+		return enabled.get();
 	}
 	
 	private static boolean isWindows() {

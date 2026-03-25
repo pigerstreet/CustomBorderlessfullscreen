@@ -143,7 +143,7 @@ public class ScreenResolutionsMenu extends GuiScreen {
 	
 	@Override
 	public void draw() {
-		utils.drawCenteredString(title, width / 2, headerSize / 2 - 4, 0xFFFFFF, true);
+		utils.drawCenteredText(title, width / 2, headerSize / 2 - 4, 0xFFFFFF, true);
 		if(contentChanged) {
 			onResize();
 		}

@@ -16,15 +16,15 @@ import com.mojang.blaze3d.platform.Window;
 public class GLFWUtil {
 	
 	public static void enableFullscreen(Window window, MonitorInfo monitor) {
-		glfwSetWindowMonitor(window.getWindow(), monitor.handle, monitor.posX, monitor.posY, monitor.width, monitor.height, monitor.refreshRate);
+		glfwSetWindowMonitor(window.handle(), monitor.handle, monitor.posX, monitor.posY, monitor.width, monitor.height, monitor.refreshRate);
 	}
 	
 	public static void disableFullscreen(Window window, int x, int y, int w, int h) {
-		glfwSetWindowMonitor(window.getWindow(), 0L, x, y, w, h, 0);
+		glfwSetWindowMonitor(window.handle(), 0L, x, y, w, h, 0);
 	}
 	
 	public static boolean isFullscreen(Window window) {
-		return glfwGetWindowMonitor(window.getWindow()) != 0L;
+		return glfwGetWindowMonitor(window.handle()) != 0L;
 	}
 	
 	public static List<Long> getMonitors() {
@@ -98,7 +98,7 @@ public class GLFWUtil {
 		if(window == null) {
 			return;
 		}
-		long windowHandle = window.getWindow();
+		long windowHandle = window.handle();
 		
 		int cursorMode = glfwGetInputMode(windowHandle, GLFW_CURSOR);
 		final int prevCursorMode = cursorMode;

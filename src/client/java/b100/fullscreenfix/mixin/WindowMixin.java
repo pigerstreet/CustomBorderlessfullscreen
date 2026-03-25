@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.Global;
@@ -19,6 +20,7 @@ import b100.fullscreenfix.util.GLFWUtil;
 import b100.fullscreenfix.util.Win32Util;
 import com.mojang.blaze3d.platform.ScreenManager;
 import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.systems.GpuBackend;
 
 @Mixin(value = Window.class)
 public abstract class WindowMixin {
@@ -44,10 +46,9 @@ public abstract class WindowMixin {
 	
 	private boolean firstUpdate = true;
 	
-	@Inject(method = "<init>", at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwWindowHint(II)V", ordinal = 0))
-	private void onSetupWindowHints(CallbackInfo info) {
+	@Inject(method = "createGlfwWindow", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/GpuBackend;setWindowHints()V", ordinal = 0))
+	private static void onSetupWindowHints(int width, int height, String title, long monitor, GpuBackend backend, CallbackInfoReturnable<Long> info) {
 		FullscreenFix.debugPrint("Setup Window Hints");
-		FullscreenFix.debugPrint("Fullscreen: " + fullscreen);
 		
 		glfwWindowHint(GLFW_AUTO_ICONIFY, 1);
 		glfwWindowHint(GLFW_RESIZABLE, 1);
@@ -65,27 +66,27 @@ public abstract class WindowMixin {
 		// Center Window
 		int[] i = new int[1];
 		int[] j = new int[1];
-		glfwGetWindowSize(getWindow(), i, j);
+		glfwGetWindowSize(handle(), i, j);
 		int width = i[0];
 		int height = j[0];
 		MonitorInfo monitor = new MonitorInfo(glfwGetPrimaryMonitor());
 		int x = (monitor.width - width) / 2;
 		int y = (monitor.height - height) / 2;
-		glfwSetWindowPos(getWindow(), x, y);
+		glfwSetWindowPos(handle(), x, y);
 		this.windowPosX = x;
 		this.windowPosY = y;
 		this.windowWidth = width;
 		this.windowHeight = height;
 		
-		glfwShowWindow(getWindow());
+		glfwShowWindow(handle());
 		initialized = true;
 		
-		glfwSetWindowMaximizeCallback(getWindow(), (window, maximized) -> {
+		glfwSetWindowMaximizeCallback(handle(), (window, maximized) -> {
 			isMaximized = maximized;
 		});
 	}
 	
-	@Inject(method = "updateDisplay", at = @At(value = "TAIL"))
+	@Inject(method = "updateFullscreenIfChanged", at = @At(value = "TAIL"))
 	private void onSwapBuffers(CallbackInfo ci) {
 		if(FullscreenFix.windowNeedsUpdate) {
 			FullscreenFix.windowNeedsUpdate = false;
@@ -120,7 +121,7 @@ public abstract class WindowMixin {
 			windowMaximized = isMaximized;
 			
 			if(!isMaximized) {
-				final long handle = getWindow();
+				final long handle = handle();
 				
 				int[] i = new int[1];
 				int[] j = new int[1];
@@ -164,7 +165,7 @@ public abstract class WindowMixin {
 		}
 		
 		final Window window = (Window)(Object)this;
-		final long handle = getWindow();
+		final long handle = handle();
 		
 		if(Global.OS_WINDOWS) {
 			Win32Util.updateWindowState(window, windowPosX, windowPosY, windowWidth, windowHeight, windowMaximized, firstUpdate);
@@ -179,7 +180,7 @@ public abstract class WindowMixin {
 			FullscreenFix.print("Change to Fullscreen with custom resolution");
 			
 			MonitorInfo monitorInfo = new MonitorInfo(fullscreenMode.monitor);
-			glfwSetWindowMonitor(window.getWindow(), 
+			glfwSetWindowMonitor(window.handle(), 
 					fullscreenMode.monitor,
 					monitorInfo.posX,
 					monitorInfo.posY,
@@ -237,6 +238,6 @@ public abstract class WindowMixin {
 	}
 	
 	@Shadow
-	public abstract long getWindow();
+	public abstract long handle();
 	
 }

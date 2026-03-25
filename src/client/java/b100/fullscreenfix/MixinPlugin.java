@@ -20,7 +20,7 @@ public class MixinPlugin implements IMixinConfigPlugin {
 		mixinsThatRequireModEnabled.add("VideoOptionsScreenMixin");
 		mixinsThatRequireModEnabled.add("WindowMixin");
 		
-		sodiumMixins.add("sodium.SodiumGameOptionPagesMixin");
+		sodiumMixins.add("sodium.SodiumConfigBuilderMixin");
 	}
 	
 	@Override

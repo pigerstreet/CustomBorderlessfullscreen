@@ -1,20 +1,12 @@
 package b100.fullscreenfix;
 
-import static b100.fullscreenfix.Global.*;
+import static b100.fullscreenfix.Global.INDEV;
+import static b100.fullscreenfix.Global.MODID;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import net.minecraft.Util;
-import net.minecraft.Util.OS;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.OptionInstance;
-import net.minecraft.client.OptionInstance.TooltipSupplier;
-import net.minecraft.client.Options;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
+
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.serialization.Codec;
 
@@ -28,6 +20,16 @@ import b100.lib.config.property.BooleanProperty;
 import b100.lib.config.property.BooleanPropertyImpl;
 import b100.lib.config.property.Property;
 import b100.lib.translate.Translations;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.OptionInstance;
+import net.minecraft.client.OptionInstance.TooltipSupplier;
+import net.minecraft.client.Options;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.util.Util;
+import net.minecraft.util.Util.OS;
 
 public class FullscreenFix {
 	

@@ -23,7 +23,7 @@ public class MonitorInfo implements ConfigStringifiable {
 				FullscreenFix.debugPrint("No last fullscreen monitor to use!");
 			}
 		}
-		return getMonitor(window.getWindow());
+		return getMonitor(window.handle());
 	}
 
 	public static MonitorInfo getMonitor(long window) {
