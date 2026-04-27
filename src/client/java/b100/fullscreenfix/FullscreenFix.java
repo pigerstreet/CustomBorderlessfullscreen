@@ -50,7 +50,7 @@ public class FullscreenFix {
 			}
 		}
 	};
-	public static final BooleanProperty AUTO_MINIMIZE = new BooleanPropertyImpl(true) {
+	public static final BooleanProperty AUTO_MINIMIZE = new BooleanPropertyImpl(false) {
 		@Override
 		public void setBoolean(boolean value) {
 			if(value != getBoolean()) {
