@@ -73,7 +73,7 @@ public class ConfigScreen extends GuiScrollListScreen {
 	
 	@Override
 	public void onResize() {
-		setDoubleFooterButtonPositions(saveConfigButton, cancelButton);
+		setDoubleFooterButtonPositions(cancelButton, saveConfigButton);
 		super.onResize();
 	}
 	
