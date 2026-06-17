@@ -26,7 +26,6 @@ import b100.fullscreenfix.RenderResolution;
 import b100.fullscreenfix.VideoMode;
 import b100.fullscreenfix.util.GLFWUtil;
 import b100.fullscreenfix.util.Win32Util;
-import com.mojang.blaze3d.platform.ScreenManager;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.platform.WindowEventHandler;
 import com.mojang.blaze3d.systems.GpuBackend;
@@ -36,8 +35,6 @@ public abstract class WindowMixin {
 
 	@Shadow
 	private boolean fullscreen;
-	@Shadow
-	private ScreenManager screenManager;
 	@Shadow
 	private int framebufferWidth;
 	@Shadow

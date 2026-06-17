@@ -10,7 +10,7 @@
 		"GuiMixin",
 		"GuiRendererMixin",
 		"InputUtilMixin",
-		"KeyboardMixin",
+		"MinecraftMixin",
 		"MouseHandlerMixin",
 		"PictureInPictureRendererMixin",
 		"VideoOptionsScreenMixin",
