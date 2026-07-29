@@ -48,6 +48,17 @@ public class FullscreenFix {
 	 */
 	public static int realFramebufferWidth = 0;
 	public static int realFramebufferHeight = 0;
+
+	/**
+	 * The actual size of the window in screen coordinates.
+	 *
+	 * The game is told that the window has the size of the custom render resolution instead, so that
+	 * everything reading the window size gets numbers that match the coordinate space the game is
+	 * rendering and laying its gui out in. Cursor positions arrive from GLFW in the real coordinate
+	 * space though, so they have to be scaled into that same space.
+	 */
+	public static int realScreenWidth = 0;
+	public static int realScreenHeight = 0;
 	
 	// Config
 	public static final PropertiesFile CONFIG = new PropertiesFile(Global.CONFIG_FILE);
@@ -166,6 +177,26 @@ public class FullscreenFix {
 			return null;
 		}
 		return RENDER_RESOLUTION.get();
+	}
+
+	/**
+	 * Factor to convert a cursor position from the real window into the coordinate space the game
+	 * believes the window has. 1 when no custom render resolution is active.
+	 */
+	public static double getCursorScaleX() {
+		RenderResolution resolution = getActiveRenderResolution();
+		if(resolution == null || realScreenWidth <= 0) {
+			return 1.0;
+		}
+		return (double) resolution.width / (double) realScreenWidth;
+	}
+
+	public static double getCursorScaleY() {
+		RenderResolution resolution = getActiveRenderResolution();
+		if(resolution == null || realScreenHeight <= 0) {
+			return 1.0;
+		}
+		return (double) resolution.height / (double) realScreenHeight;
 	}
 	
 	public static void setWindow(Window window) {

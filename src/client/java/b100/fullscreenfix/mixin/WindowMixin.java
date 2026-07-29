@@ -38,6 +38,10 @@ public abstract class WindowMixin {
 	@Shadow
 	private int framebufferHeight;
 	@Shadow
+	private int width;
+	@Shadow
+	private int height;
+	@Shadow
 	private boolean isResized;
 	@Shadow
 	@Final
@@ -147,13 +151,35 @@ public abstract class WindowMixin {
 		return renderResolutionHeight(realHeight);
 	}
 
+	/**
+	 * The window size in screen coordinates has to be replaced along with the framebuffer size.
+	 * Cursor positions are mapped into gui coordinates using the ratio between the two, and mods
+	 * commonly use the framebuffer size for that instead of the screen size because the two are
+	 * normally the same. Leaving them disagreeing is what made clicks land in the wrong place.
+	 */
+	@ModifyVariable(method = "onResize", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+	private int onResizeWidth(int realWidth) {
+		FullscreenFix.realScreenWidth = realWidth;
+		return renderResolutionWidth(realWidth);
+	}
+
+	@ModifyVariable(method = "onResize", at = @At("HEAD"), argsOnly = true, ordinal = 1)
+	private int onResizeHeight(int realHeight) {
+		FullscreenFix.realScreenHeight = realHeight;
+		return renderResolutionHeight(realHeight);
+	}
+
 	@Inject(method = "refreshFramebufferSize", at = @At("TAIL"))
 	private void onRefreshFramebufferSize(CallbackInfo ci) {
 		FullscreenFix.realFramebufferWidth = framebufferWidth;
 		FullscreenFix.realFramebufferHeight = framebufferHeight;
+		FullscreenFix.realScreenWidth = width;
+		FullscreenFix.realScreenHeight = height;
 
 		framebufferWidth = renderResolutionWidth(framebufferWidth);
 		framebufferHeight = renderResolutionHeight(framebufferHeight);
+		width = renderResolutionWidth(width);
+		height = renderResolutionHeight(height);
 
 		if(framebufferWidth != FullscreenFix.realFramebufferWidth || framebufferHeight != FullscreenFix.realFramebufferHeight) {
 			FullscreenFix.print("Using render resolution " + framebufferWidth + " x " + framebufferHeight

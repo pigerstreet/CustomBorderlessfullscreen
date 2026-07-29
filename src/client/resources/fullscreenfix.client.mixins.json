@@ -8,6 +8,7 @@
 		"GlCommandEncoderMixin",
 		"InputUtilMixin",
 		"KeyboardMixin",
+		"MouseHandlerMixin",
 		"VideoOptionsScreenMixin",
 		"WindowMixin"
 	],
