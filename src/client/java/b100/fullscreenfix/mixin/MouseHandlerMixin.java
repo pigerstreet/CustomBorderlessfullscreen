@@ -21,12 +21,12 @@ public class MouseHandlerMixin {
 	 */
 	@ModifyVariable(method = "onMove", at = @At("HEAD"), argsOnly = true, ordinal = 0)
 	private double scaleCursorX(double xpos) {
-		return xpos * FullscreenFix.getCursorScaleX();
+		return (xpos - FullscreenFix.getCursorOffsetX()) * FullscreenFix.getCursorScaleX();
 	}
 
 	@ModifyVariable(method = "onMove", at = @At("HEAD"), argsOnly = true, ordinal = 1)
 	private double scaleCursorY(double ypos) {
-		return ypos * FullscreenFix.getCursorScaleY();
+		return (ypos - FullscreenFix.getCursorOffsetY()) * FullscreenFix.getCursorScaleY();
 	}
 
 	/**

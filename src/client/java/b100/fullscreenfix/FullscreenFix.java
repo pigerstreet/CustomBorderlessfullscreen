@@ -95,6 +95,8 @@ public class FullscreenFix {
 	public static final BooleanProperty CONFIG_SCREEN_HOTKEY_ENABLED = new BooleanPropertyImpl(true);
 	public static Property<VideoMode> FULLSCREEN_VIDEO_MODE = Property.create(null, VideoMode::parse).addValueChangeListener(value -> updateWindow());
 	public static Property<RenderResolution> RENDER_RESOLUTION = Property.create(null, RenderResolution::parse).addValueChangeListener(value -> renderResolutionNeedsUpdate = true);
+	public static final BooleanProperty KEEP_ASPECT_RATIO = new BooleanPropertyImpl(false);
+	public static final BooleanProperty SHARP_SCALING = new BooleanPropertyImpl(false);
 	public static Property<MonitorInfo> LAST_FULLSCREEN_MONITOR = Property.create(null, MonitorInfo::fromConfigString).addValueChangeListener(value -> {
 		debugPrint("Change fullscreen monitor: " + value.toConfigString());
 		CONFIG.save();
@@ -110,6 +112,8 @@ public class FullscreenFix {
 		CONFIG.add("configScreenHotkeyEnabled", CONFIG_SCREEN_HOTKEY_ENABLED);
 		CONFIG.add("fullscreenVideoMode", FULLSCREEN_VIDEO_MODE);
 		CONFIG.add("renderResolution", RENDER_RESOLUTION);
+		CONFIG.add("renderResolutionKeepAspectRatio", KEEP_ASPECT_RATIO);
+		CONFIG.add("renderResolutionSharpScaling", SHARP_SCALING);
 		CONFIG.load();
 	}
 
@@ -180,6 +184,56 @@ public class FullscreenFix {
 	}
 
 	/**
+	 * The part of the window the frame is presented into, as a fraction of the window size.
+	 *
+	 * Stretching fills the whole window, so the fraction is 1. Keeping the aspect ratio fits the
+	 * frame inside the window instead and centres it, which leaves a bar on two of the sides.
+	 *
+	 * The window has the same shape in framebuffer pixels and in screen coordinates, so the same
+	 * fraction describes the presented area in both.
+	 */
+	public static double getPresentFractionWidth() {
+		RenderResolution resolution = getActiveRenderResolution();
+		if(resolution == null || !KEEP_ASPECT_RATIO.getBoolean() || realFramebufferWidth <= 0 || realFramebufferHeight <= 0) {
+			return 1.0;
+		}
+		return resolution.width * getFitScale(resolution) / realFramebufferWidth;
+	}
+
+	public static double getPresentFractionHeight() {
+		RenderResolution resolution = getActiveRenderResolution();
+		if(resolution == null || !KEEP_ASPECT_RATIO.getBoolean() || realFramebufferWidth <= 0 || realFramebufferHeight <= 0) {
+			return 1.0;
+		}
+		return resolution.height * getFitScale(resolution) / realFramebufferHeight;
+	}
+
+	private static double getFitScale(RenderResolution resolution) {
+		return Math.min((double) realFramebufferWidth / resolution.width,
+				(double) realFramebufferHeight / resolution.height);
+	}
+
+	/**
+	 * True when the frame does not cover the whole window, so the area around it has to be cleared.
+	 */
+	public static boolean hasEmptyBorder() {
+		return getPresentFractionWidth() < 1.0 || getPresentFractionHeight() < 1.0;
+	}
+
+	/**
+	 * Distance from the window edge to the presented frame, in screen coordinates. Cursor positions
+	 * have to have this taken off before being scaled, otherwise everything is off by the size of
+	 * the bar once the frame no longer starts in the corner of the window.
+	 */
+	public static double getCursorOffsetX() {
+		return (1.0 - getPresentFractionWidth()) / 2.0 * realScreenWidth;
+	}
+
+	public static double getCursorOffsetY() {
+		return (1.0 - getPresentFractionHeight()) / 2.0 * realScreenHeight;
+	}
+
+	/**
 	 * Factor to convert a cursor position from the real window into the coordinate space the game
 	 * believes the window has. 1 when no custom render resolution is active.
 	 */
@@ -188,7 +242,11 @@ public class FullscreenFix {
 		if(resolution == null || realScreenWidth <= 0) {
 			return 1.0;
 		}
-		return (double) resolution.width / (double) realScreenWidth;
+		final double presentedWidth = getPresentFractionWidth() * realScreenWidth;
+		if(presentedWidth <= 0.0) {
+			return 1.0;
+		}
+		return resolution.width / presentedWidth;
 	}
 
 	public static double getCursorScaleY() {
@@ -196,7 +254,11 @@ public class FullscreenFix {
 		if(resolution == null || realScreenHeight <= 0) {
 			return 1.0;
 		}
-		return (double) resolution.height / (double) realScreenHeight;
+		final double presentedHeight = getPresentFractionHeight() * realScreenHeight;
+		if(presentedHeight <= 0.0) {
+			return 1.0;
+		}
+		return resolution.height / presentedHeight;
 	}
 	
 	public static void setWindow(Window window) {

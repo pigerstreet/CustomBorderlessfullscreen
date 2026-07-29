@@ -1,11 +1,16 @@
 package b100.fullscreenfix.mixin;
 
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.textures.GpuTextureView;
 
@@ -16,6 +21,7 @@ import net.minecraft.client.Minecraft;
 @Mixin(targets = "com.mojang.blaze3d.opengl.GlCommandEncoder")
 public class GlCommandEncoderMixin {
 
+	private static final int GL_NEAREST = 0x2600;
 	private static final int GL_LINEAR = 0x2601;
 
 	/**
@@ -56,11 +62,41 @@ public class GlCommandEncoderMixin {
 			return;
 		}
 
-		args.set(8, windowWidth);
-		args.set(9, windowHeight);
+		// Stretching covers the whole window, keeping the aspect ratio covers a centred part of it
+		final int targetWidth = (int) Math.round(FullscreenFix.getPresentFractionWidth() * windowWidth);
+		final int targetHeight = (int) Math.round(FullscreenFix.getPresentFractionHeight() * windowHeight);
+		final int targetX = (windowWidth - targetWidth) / 2;
+		final int targetY = (windowHeight - targetHeight) / 2;
 
-		// Nearest neighbour is fine for a 1:1 blit but produces a very harsh image when scaling
-		args.set(11, GL_LINEAR);
+		args.set(6, targetX);
+		args.set(7, targetY);
+		args.set(8, targetX + targetWidth);
+		args.set(9, targetY + targetHeight);
+
+		// Nearest neighbour keeps pixel edges crisp, linear avoids a harsh image when scaling
+		args.set(11, FullscreenFix.SHARP_SCALING.getBoolean() ? GL_NEAREST : GL_LINEAR);
+	}
+
+	/**
+	 * Anything outside the presented frame keeps whatever the back buffer happened to contain, so
+	 * the bars left by keeping the aspect ratio have to be cleared to black first.
+	 */
+	@Inject(method = "presentTexture", at = @At("HEAD"))
+	private void clearBorderAroundFrame(GpuTextureView textureView, CallbackInfo ci) {
+		if(FullscreenFix.getActiveRenderResolution() == null) {
+			return;
+		}
+		if(!isMainRenderTarget(textureView) || !FullscreenFix.hasEmptyBorder()) {
+			return;
+		}
+
+		GlStateManager._glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, 0);
+		GlStateManager._disableScissorTest();
+		GlStateManager._colorMask(15);
+
+		// Blaze3d does not track the clear colour, so it has to be set directly
+		GL11.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		GlStateManager._clear(GL11.GL_COLOR_BUFFER_BIT);
 	}
 
 	private static boolean isMainRenderTarget(GpuTextureView textureView) {
