@@ -42,6 +42,12 @@ public abstract class WindowMixin {
 	@Shadow
 	private int height;
 	@Shadow
+	private int guiScale;
+	@Shadow
+	private int guiScaledWidth;
+	@Shadow
+	private int guiScaledHeight;
+	@Shadow
 	private boolean isResized;
 	@Shadow
 	@Final
@@ -113,6 +119,55 @@ public abstract class WindowMixin {
 			FullscreenFix.renderResolutionNeedsUpdate = false;
 			applyRenderResolution();
 		}
+		logCoordinateState();
+	}
+
+	private int loggedFramebufferWidth = -1;
+	private int loggedFramebufferHeight = -1;
+	private int loggedWidth = -1;
+	private int loggedHeight = -1;
+	private int loggedRealFramebufferWidth = -1;
+	private int loggedRealFramebufferHeight = -1;
+	private int loggedRealScreenWidth = -1;
+	private int loggedRealScreenHeight = -1;
+	private int loggedGuiScale = -1;
+
+	/**
+	 * Prints the sizes the game is working with whenever any of them change. Everything derived from
+	 * a cursor position depends on these agreeing with each other.
+	 *
+	 * This runs every frame, so it compares the values themselves and only builds a message once
+	 * something has actually changed.
+	 */
+	private void logCoordinateState() {
+		if(framebufferWidth == loggedFramebufferWidth
+				&& framebufferHeight == loggedFramebufferHeight
+				&& width == loggedWidth
+				&& height == loggedHeight
+				&& FullscreenFix.realFramebufferWidth == loggedRealFramebufferWidth
+				&& FullscreenFix.realFramebufferHeight == loggedRealFramebufferHeight
+				&& FullscreenFix.realScreenWidth == loggedRealScreenWidth
+				&& FullscreenFix.realScreenHeight == loggedRealScreenHeight
+				&& guiScale == loggedGuiScale) {
+			return;
+		}
+
+		loggedFramebufferWidth = framebufferWidth;
+		loggedFramebufferHeight = framebufferHeight;
+		loggedWidth = width;
+		loggedHeight = height;
+		loggedRealFramebufferWidth = FullscreenFix.realFramebufferWidth;
+		loggedRealFramebufferHeight = FullscreenFix.realFramebufferHeight;
+		loggedRealScreenWidth = FullscreenFix.realScreenWidth;
+		loggedRealScreenHeight = FullscreenFix.realScreenHeight;
+		loggedGuiScale = guiScale;
+
+		FullscreenFix.debugPrint("Coordinates:"
+				+ " framebuffer=" + framebufferWidth + "x" + framebufferHeight
+				+ " screen=" + width + "x" + height
+				+ " realFramebuffer=" + FullscreenFix.realFramebufferWidth + "x" + FullscreenFix.realFramebufferHeight
+				+ " realScreen=" + FullscreenFix.realScreenWidth + "x" + FullscreenFix.realScreenHeight
+				+ " guiScale=" + guiScale + " guiScaled=" + guiScaledWidth + "x" + guiScaledHeight);
 	}
 
 	/**
