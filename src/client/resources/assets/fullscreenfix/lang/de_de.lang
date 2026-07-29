@@ -13,8 +13,10 @@ option.exclusiveFullscreen=Exklusiver Vollbildmodus
 option.autoMinimize=Minimieren bei Fokusverlust
 option.autoMinimize.tooltip=Diese Option funktioniert nur wenn der randlose Vollbildmodus deaktiviert ist.
 option.fullscreenResolution=Vollbildauflösung
-option.fullscreenResolution.tooltip=Wenn man eine eigene Vollbildauflösung benutzt wird der randlose Vollbildmodus deaktiviert.
+option.fullscreenResolution.tooltip=Ändert den Anzeigemodus des Bildschirms. Wenn man eine eigene Vollbildauflösung benutzt wird der randlose Vollbildmodus deaktiviert und die Renderauflösung überschrieben.
 option.fullscreenResolution.default=Standard
+option.renderResolution=Renderauflösung
+option.renderResolution.tooltip=Rendert das Spiel in einer eigenen Auflösung und streckt das Bild auf die Fenstergröße. Der Bildschirm behält seine eigene Auflösung, dadurch funktioniert dies zusammen mit dem randlosen Vollbildmodus.
 option.startInFullscreen=Im Vollbildmodus starten
 option.startInFullscreen.tooltip=Wenn deaktiviert startet das Spiel nicht im Vollbildmodus.
 option.replaceVideoSettings=Vollbild-Schaltfläche ersetzen
@@ -25,8 +27,14 @@ option.configScreenHotkeyEnabled=Konfigurationsmenü-Tastenkombination
 option.configScreenHotkeyEnabled.tooltip=Wenn aktiviert, kann das Konfigurationsmenü geöffnet werden, indem man STRG und die Vollbildtaste drückt. Das Konfigurationsmenü kann auch mit der Mod "Mod Menu" geöffnet werden.
 
 value.fullscreenResolution.default=Standard
+value.renderResolution.default=Standard
+value.renderResolution.native=Nativ
+value.renderResolution.invalid=Breite und Höhe müssen zwischen 160 und 16384 liegen
+value.renderResolution.width=Breite
+value.renderResolution.height=Höhe
 value.yes=Ja
 value.no=Nein
 
 screen.fullscreenSettings.title=Vollbildeinstellungen
 screen.fullscreenResolution.title=Vollbildauflösung
+screen.renderResolution.title=Renderauflösung

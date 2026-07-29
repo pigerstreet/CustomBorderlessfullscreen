@@ -2,6 +2,7 @@ package b100.fullscreenfix.gui;
 
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.Global;
+import b100.fullscreenfix.RenderResolution;
 import b100.fullscreenfix.VideoMode;
 import b100.lib.client.gui.config.SaveConfigButton;
 import b100.lib.client.gui.config.base.ConfigElement;
@@ -21,6 +22,7 @@ public class ConfigScreen extends GuiScrollListScreen {
 	public SaveConfigButton saveConfigButton;
 
 	private CustomOptionElement<VideoMode> fullscreenResolutionButton;
+	private CustomOptionElement<RenderResolution> renderResolutionButton;
 	
 	public ConfigScreen(IScreen parentScreen) {
 		super(parentScreen);
@@ -57,6 +59,10 @@ public class ConfigScreen extends GuiScrollListScreen {
 			.addActionListener((e) -> utils.setScreen(new ScreenResolutionsMenu(this)))
 			.setToTextFunction((videoMode) -> videoMode != null ? Component.literal(videoMode.toString()) : FullscreenFix.TRANS.asText("value.fullscreenResolution.default")));
 
+			renderResolutionButton = scrollList.add(new CustomOptionElement<>(this, "option.renderResolution", FullscreenFix.RENDER_RESOLUTION.get())
+			.addActionListener((e) -> utils.setScreen(new RenderResolutionMenu(this)))
+			.setToTextFunction((resolution) -> resolution != null ? Component.literal(resolution.toString()) : FullscreenFix.TRANS.asText("value.renderResolution.default")));
+
 			scrollList.add(BooleanToggleElement.create(this, "option.replaceVideoSettings", FullscreenFix.REPLACE_VIDEO_SETTINGS_BUTTON, UpdateMode.ON_SAVE));
 			scrollList.add(BooleanToggleElement.create(this, "option.configScreenHotkeyEnabled", FullscreenFix.CONFIG_SCREEN_HOTKEY_ENABLED, UpdateMode.ON_SAVE));
 		}
@@ -81,6 +87,9 @@ public class ConfigScreen extends GuiScrollListScreen {
 	public void onScreenOpened() {
 		if(fullscreenResolutionButton != null) {
 			fullscreenResolutionButton.setValue(FullscreenFix.FULLSCREEN_VIDEO_MODE.get());
+		}
+		if(renderResolutionButton != null) {
+			renderResolutionButton.setValue(FullscreenFix.RENDER_RESOLUTION.get());
 		}
 		super.onScreenOpened();
 	}

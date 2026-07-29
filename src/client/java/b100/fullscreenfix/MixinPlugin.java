@@ -19,6 +19,7 @@ public class MixinPlugin implements IMixinConfigPlugin {
 	public MixinPlugin() {
 		mixinsThatRequireModEnabled.add("VideoOptionsScreenMixin");
 		mixinsThatRequireModEnabled.add("WindowMixin");
+		mixinsThatRequireModEnabled.add("GlCommandEncoderMixin");
 		
 		sodiumMixins.add("sodium.SodiumConfigBuilderMixin");
 	}

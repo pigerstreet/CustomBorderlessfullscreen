@@ -13,8 +13,10 @@ option.exclusiveFullscreen=Exclusive Fullscreen
 option.autoMinimize=Minimize on lost focus
 option.autoMinimize.tooltip=Requires exclusive fullscreen mode
 option.fullscreenResolution=Fullscreen Resolution
-option.fullscreenResolution.tooltip=Using a custom Fullscreen Resolution will disable Borderless Fullscreen
+option.fullscreenResolution.tooltip=Changes the actual display mode of the monitor. Using a custom Fullscreen Resolution will disable Borderless Fullscreen and override the Render Resolution
 option.fullscreenResolution.default=Default
+option.renderResolution=Render Resolution
+option.renderResolution.tooltip=Renders the game at a custom resolution and stretches it to fill the window. The monitor stays at its own resolution, so this works with Borderless Fullscreen
 option.startInFullscreen=Start in Fullscreen
 option.startInFullscreen.tooltip=When disabled, the game will always start in windowed mode
 option.replaceVideoSettings=Replace Fullscreen Button
@@ -25,8 +27,14 @@ option.configScreenHotkeyEnabled=Config Screen Hotkey
 option.configScreenHotkeyEnabled.tooltip=When enabled, the config screen can be opened by pressing CTRL and the fullscreen key. The config screen can also be opened with the "Mod Menu" mod
 
 value.fullscreenResolution.default=Default
+value.renderResolution.default=Default
+value.renderResolution.native=Native
+value.renderResolution.invalid=Enter a width and height between 160 and 16384
+value.renderResolution.width=Width
+value.renderResolution.height=Height
 value.yes=Yes
 value.no=No
 
 screen.fullscreenSettings.title=Fullscreen Settings
 screen.fullscreenResolution.title=Fullscreen Resolution
+screen.renderResolution.title=Render Resolution

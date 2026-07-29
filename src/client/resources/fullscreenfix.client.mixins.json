@@ -5,6 +5,7 @@
 	"compatibilityLevel": "JAVA_25",
 	"client": [
 		"access.WindowAccess",
+		"GlCommandEncoderMixin",
 		"InputUtilMixin",
 		"KeyboardMixin",
 		"VideoOptionsScreenMixin",

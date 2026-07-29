@@ -37,6 +37,17 @@ public class FullscreenFix {
 
 	public static boolean windowNeedsUpdate = true;
 	public static boolean fullscreenModeWasChanged = false;
+	public static boolean renderResolutionNeedsUpdate = false;
+
+	/**
+	 * The actual size of the window framebuffer, in pixels.
+	 *
+	 * While a custom render resolution is active the game is told that the framebuffer has the size
+	 * of that resolution, so the real size has to be kept separately: it is what the finished frame
+	 * gets stretched onto.
+	 */
+	public static int realFramebufferWidth = 0;
+	public static int realFramebufferHeight = 0;
 	
 	// Config
 	public static final PropertiesFile CONFIG = new PropertiesFile(Global.CONFIG_FILE);
@@ -72,6 +83,7 @@ public class FullscreenFix {
 	};
 	public static final BooleanProperty CONFIG_SCREEN_HOTKEY_ENABLED = new BooleanPropertyImpl(true);
 	public static Property<VideoMode> FULLSCREEN_VIDEO_MODE = Property.create(null, VideoMode::parse).addValueChangeListener(value -> updateWindow());
+	public static Property<RenderResolution> RENDER_RESOLUTION = Property.create(null, RenderResolution::parse).addValueChangeListener(value -> renderResolutionNeedsUpdate = true);
 	public static Property<MonitorInfo> LAST_FULLSCREEN_MONITOR = Property.create(null, MonitorInfo::fromConfigString).addValueChangeListener(value -> {
 		debugPrint("Change fullscreen monitor: " + value.toConfigString());
 		CONFIG.save();
@@ -86,6 +98,7 @@ public class FullscreenFix {
 		CONFIG.add("captureCursorInFullscreen", CAPTURE_CURSOR);
 		CONFIG.add("configScreenHotkeyEnabled", CONFIG_SCREEN_HOTKEY_ENABLED);
 		CONFIG.add("fullscreenVideoMode", FULLSCREEN_VIDEO_MODE);
+		CONFIG.add("renderResolution", RENDER_RESOLUTION);
 		CONFIG.load();
 	}
 
@@ -138,6 +151,21 @@ public class FullscreenFix {
 	}
 	public static void updateWindow() {
 		windowNeedsUpdate = true;
+	}
+
+	/**
+	 * The custom render resolution that should currently be applied, or null to render at the
+	 * native framebuffer size.
+	 *
+	 * A custom fullscreen video mode changes the actual display mode, so the window already has the
+	 * resolution the user asked for and there is nothing to upscale. In that case the custom render
+	 * resolution is ignored rather than stacking the two.
+	 */
+	public static RenderResolution getActiveRenderResolution() {
+		if(FULLSCREEN_VIDEO_MODE.get() != null) {
+			return null;
+		}
+		return RENDER_RESOLUTION.get();
 	}
 	
 	public static void setWindow(Window window) {

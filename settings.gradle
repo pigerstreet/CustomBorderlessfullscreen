@@ -8,3 +8,8 @@ pluginManagement {
 		gradlePluginPortal()
 	}
 }
+
+plugins {
+	// Lets Gradle download the Java 25 toolchain the game requires
+	id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}

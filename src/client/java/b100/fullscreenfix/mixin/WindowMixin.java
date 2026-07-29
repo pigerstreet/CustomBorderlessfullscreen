@@ -5,31 +5,44 @@ import static org.lwjgl.glfw.GLFW.*;
 import java.util.Optional;
 
 import org.lwjgl.glfw.GLFWVidMode;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.Global;
 import b100.fullscreenfix.MonitorInfo;
+import b100.fullscreenfix.RenderResolution;
 import b100.fullscreenfix.VideoMode;
 import b100.fullscreenfix.util.GLFWUtil;
 import b100.fullscreenfix.util.Win32Util;
 import com.mojang.blaze3d.platform.ScreenManager;
 import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.platform.WindowEventHandler;
 import com.mojang.blaze3d.systems.GpuBackend;
 
 @Mixin(value = Window.class)
 public abstract class WindowMixin {
-	
+
 	@Shadow
 	private boolean fullscreen;
 	@Shadow
 	private ScreenManager screenManager;
-	
+	@Shadow
+	private int framebufferWidth;
+	@Shadow
+	private int framebufferHeight;
+	@Shadow
+	private boolean isResized;
+	@Shadow
+	@Final
+	private WindowEventHandler eventHandler;
+
 	private boolean wasFullscreen = false;
 	private boolean initialized = false;
 	
@@ -92,6 +105,92 @@ public abstract class WindowMixin {
 			FullscreenFix.windowNeedsUpdate = false;
 			updateWindowState();
 		}
+		if(FullscreenFix.renderResolutionNeedsUpdate) {
+			FullscreenFix.renderResolutionNeedsUpdate = false;
+			applyRenderResolution();
+		}
+	}
+
+	/**
+	 * The framebuffer size the game is told about. While a custom render resolution is active this
+	 * is that resolution rather than the real size of the window, which makes the main render
+	 * target, the gui scale and the mouse mapping all follow it without any further patching.
+	 *
+	 * A size of zero means the window is minimized and has to be passed through untouched, because
+	 * that is what vanilla uses to detect it.
+	 */
+	private static int renderResolutionWidth(int realWidth) {
+		RenderResolution resolution = FullscreenFix.getActiveRenderResolution();
+		if(resolution == null || realWidth == 0) {
+			return realWidth;
+		}
+		return resolution.width;
+	}
+
+	private static int renderResolutionHeight(int realHeight) {
+		RenderResolution resolution = FullscreenFix.getActiveRenderResolution();
+		if(resolution == null || realHeight == 0) {
+			return realHeight;
+		}
+		return resolution.height;
+	}
+
+	@ModifyVariable(method = "onFramebufferResize", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+	private int onFramebufferResizeWidth(int realWidth) {
+		FullscreenFix.realFramebufferWidth = realWidth;
+		return renderResolutionWidth(realWidth);
+	}
+
+	@ModifyVariable(method = "onFramebufferResize", at = @At("HEAD"), argsOnly = true, ordinal = 1)
+	private int onFramebufferResizeHeight(int realHeight) {
+		FullscreenFix.realFramebufferHeight = realHeight;
+		return renderResolutionHeight(realHeight);
+	}
+
+	@Inject(method = "refreshFramebufferSize", at = @At("TAIL"))
+	private void onRefreshFramebufferSize(CallbackInfo ci) {
+		FullscreenFix.realFramebufferWidth = framebufferWidth;
+		FullscreenFix.realFramebufferHeight = framebufferHeight;
+
+		framebufferWidth = renderResolutionWidth(framebufferWidth);
+		framebufferHeight = renderResolutionHeight(framebufferHeight);
+
+		if(framebufferWidth != FullscreenFix.realFramebufferWidth || framebufferHeight != FullscreenFix.realFramebufferHeight) {
+			FullscreenFix.print("Using render resolution " + framebufferWidth + " x " + framebufferHeight
+					+ " (window is " + FullscreenFix.realFramebufferWidth + " x " + FullscreenFix.realFramebufferHeight + ")");
+		}
+	}
+
+	/**
+	 * Applies a render resolution that was changed while the game is running. Resizing the render
+	 * targets in the middle of a frame is not safe, so this is only called from
+	 * {@link #onSwapBuffers}, between frames.
+	 */
+	private void applyRenderResolution() {
+		final int realWidth = FullscreenFix.realFramebufferWidth;
+		final int realHeight = FullscreenFix.realFramebufferHeight;
+
+		if(realWidth <= 0 || realHeight <= 0) {
+			// Window is minimized, the correct size gets applied when it is restored
+			return;
+		}
+
+		final int newWidth = renderResolutionWidth(realWidth);
+		final int newHeight = renderResolutionHeight(realHeight);
+
+		if(newWidth == framebufferWidth && newHeight == framebufferHeight) {
+			return;
+		}
+
+		FullscreenFix.print("Change render resolution to " + newWidth + " x " + newHeight + " (window is " + realWidth + " x " + realHeight + ")");
+
+		framebufferWidth = newWidth;
+		framebufferHeight = newHeight;
+
+		// Makes the game renderer resize the main render target on the next frame
+		isResized = true;
+
+		eventHandler.resizeGui();
 	}
 	
 	@Inject(method = "setMode", at = @At(value = "HEAD"), cancellable = true)
