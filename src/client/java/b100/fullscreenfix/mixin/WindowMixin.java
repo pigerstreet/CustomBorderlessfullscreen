@@ -170,7 +170,7 @@ public abstract class WindowMixin {
 		loggedRealScreenHeight = FullscreenFix.realScreenHeight;
 		loggedGuiScale = guiScale;
 
-		FullscreenFix.print("Coordinates:"
+		FullscreenFix.printCoordinates("Coordinates:"
 				+ " framebuffer=" + framebufferWidth + "x" + framebufferHeight
 				+ " screen=" + width + "x" + height
 				+ " realFramebuffer=" + FullscreenFix.realFramebufferWidth + "x" + FullscreenFix.realFramebufferHeight
@@ -220,7 +220,7 @@ public abstract class WindowMixin {
 		final double drawnX = framebufferWidth / extentWidth;
 		final double drawnY = framebufferHeight / extentHeight;
 
-		FullscreenFix.print("Pixels per gui unit: cursor uses " + cursorX + " x " + cursorY
+		FullscreenFix.printCoordinates("Pixels per gui unit: cursor uses " + cursorX + " x " + cursorY
 				+ ", drawing uses " + drawnX + " x " + drawnY
 				+ " (off by " + (drawnX / cursorX) + " x " + (drawnY / cursorY) + ", 1.0 is correct)");
 	}
@@ -349,6 +349,7 @@ public abstract class WindowMixin {
 	private int cachedGuiSizeForWidth = -1;
 	private int cachedGuiSizeForHeight = -1;
 	private int cachedGuiSizeForScale = -1;
+	private int cachedGuiSizeForGeneration = -1;
 	private int cachedGuiScaledWidth = -1;
 	private int cachedGuiScaledHeight = -1;
 
@@ -384,17 +385,19 @@ public abstract class WindowMixin {
 
 	/**
 	 * These getters are called many times per frame, so the result is kept until one of the things it
-	 * depends on changes. Changing the option itself does not change any of them, so
-	 * {@link #applyGuiResolution} clears the cache directly.
+	 * depends on changes.
 	 */
 	private void refreshGuiSize() {
-		if(framebufferWidth == cachedGuiSizeForWidth && framebufferHeight == cachedGuiSizeForHeight && guiScale == cachedGuiSizeForScale) {
+		if(framebufferWidth == cachedGuiSizeForWidth && framebufferHeight == cachedGuiSizeForHeight
+				&& guiScale == cachedGuiSizeForScale
+				&& FullscreenFix.guiResolutionGeneration == cachedGuiSizeForGeneration) {
 			return;
 		}
 
 		cachedGuiSizeForWidth = framebufferWidth;
 		cachedGuiSizeForHeight = framebufferHeight;
 		cachedGuiSizeForScale = guiScale;
+		cachedGuiSizeForGeneration = FullscreenFix.guiResolutionGeneration;
 		cachedGuiScaledWidth = FullscreenFix.toGuiScaledSize(FullscreenFix.getGuiExtentWidth(framebufferWidth, framebufferHeight, guiScale));
 		cachedGuiScaledHeight = FullscreenFix.toGuiScaledSize(FullscreenFix.getGuiExtentHeight(framebufferWidth, framebufferHeight, guiScale));
 	}
@@ -422,9 +425,6 @@ public abstract class WindowMixin {
 	 * gui resolution is turned off.
 	 */
 	private void applyGuiResolution() {
-		// The option changed, not anything the cached size is keyed on
-		cachedGuiSizeForScale = -1;
-
 		((Window)(Object)this).setGuiScale(guiScale);
 
 		RenderResolution resolution = FullscreenFix.getActiveGuiResolution();

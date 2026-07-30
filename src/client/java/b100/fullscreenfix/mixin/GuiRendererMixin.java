@@ -75,7 +75,7 @@ public class GuiRendererMixin {
 		loggedViewportWidth = window.width;
 		loggedViewportHeight = window.height;
 
-		FullscreenFix.print("Gui projection: extent=" + extentWidth + "x" + extentHeight
+		FullscreenFix.printCoordinates("Gui projection: extent=" + extentWidth + "x" + extentHeight
 				+ " over viewport " + window.width + "x" + window.height
 				+ ", one gui unit is " + (window.width / extentWidth) + " x " + (window.height / extentHeight) + " pixels"
 				+ ", item scale " + FullscreenFix.getEffectiveGuiScale(window.width, window.height, window.guiScale));
@@ -103,8 +103,7 @@ public class GuiRendererMixin {
 			return;
 		}
 
-		final double pixelsPerUnitX = window.width / FullscreenFix.getGuiExtentWidth(window.width, window.height, window.guiScale);
-		final double pixelsPerUnitY = window.height / FullscreenFix.getGuiExtentHeight(window.width, window.height, window.guiScale);
+		refreshPixelsPerUnit(window);
 
 		final int left = (int) Math.floor(rectangle.left() * pixelsPerUnitX);
 		final int right = (int) Math.ceil(rectangle.right() * pixelsPerUnitX);
@@ -117,6 +116,34 @@ public class GuiRendererMixin {
 		args.set(1, bottom);
 		args.set(2, Math.max(0, right - left));
 		args.set(3, Math.max(0, top - bottom));
+	}
+
+	private double pixelsPerUnitX = 1.0;
+	private double pixelsPerUnitY = 1.0;
+	private int pixelsPerUnitForWidth = -1;
+	private int pixelsPerUnitForHeight = -1;
+	private int pixelsPerUnitForScale = -1;
+	private int pixelsPerUnitForGeneration = -1;
+
+	/**
+	 * Works out the real size of a gui unit, and keeps it until the window or the gui scale changes.
+	 *
+	 * This is read once per clipped element rather than once per frame, so it is worth not repeating
+	 * the divisions and the option lookups behind it every time.
+	 */
+	private void refreshPixelsPerUnit(WindowRenderState window) {
+		if(window.width == pixelsPerUnitForWidth && window.height == pixelsPerUnitForHeight
+				&& window.guiScale == pixelsPerUnitForScale
+				&& FullscreenFix.guiResolutionGeneration == pixelsPerUnitForGeneration) {
+			return;
+		}
+
+		pixelsPerUnitForWidth = window.width;
+		pixelsPerUnitForHeight = window.height;
+		pixelsPerUnitForScale = window.guiScale;
+		pixelsPerUnitForGeneration = FullscreenFix.guiResolutionGeneration;
+		pixelsPerUnitX = window.width / FullscreenFix.getGuiExtentWidth(window.width, window.height, window.guiScale);
+		pixelsPerUnitY = window.height / FullscreenFix.getGuiExtentHeight(window.width, window.height, window.guiScale);
 	}
 
 	/**

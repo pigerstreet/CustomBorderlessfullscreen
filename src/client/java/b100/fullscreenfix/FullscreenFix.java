@@ -41,6 +41,15 @@ public class FullscreenFix {
 	public static boolean guiResolutionNeedsUpdate = false;
 
 	/**
+	 * Bumped whenever anything about the gui resolution changes.
+	 *
+	 * The size of a gui unit is worked out from the window size and the gui scale, so a cache of it
+	 * cannot notice the option itself changing. Everything that caches it keeps this number alongside
+	 * the rest of the key instead of trying to be told about the change.
+	 */
+	public static int guiResolutionGeneration = 0;
+
+	/**
 	 * The actual size of the window framebuffer, in pixels.
 	 *
 	 * While a custom render resolution is active the game is told that the framebuffer has the size
@@ -102,20 +111,26 @@ public class FullscreenFix {
 		};
 	};
 	public static final BooleanProperty CONFIG_SCREEN_HOTKEY_ENABLED = new BooleanPropertyImpl(true);
+	public static final BooleanProperty LOG_COORDINATES = new BooleanPropertyImpl(false);
 	public static Property<VideoMode> FULLSCREEN_VIDEO_MODE = Property.create(null, VideoMode::parse).addValueChangeListener(value -> updateWindow());
 	public static Property<RenderResolution> RENDER_RESOLUTION = Property.create(null, RenderResolution::parse).addValueChangeListener(value -> renderResolutionNeedsUpdate = true);
 	public static final BooleanProperty KEEP_ASPECT_RATIO = new BooleanPropertyImpl(false);
 	public static final BooleanProperty SHARP_SCALING = new BooleanPropertyImpl(false);
-	public static Property<RenderResolution> GUI_RESOLUTION = Property.create(null, RenderResolution::parse).addValueChangeListener(value -> guiResolutionNeedsUpdate = true);
+	public static Property<RenderResolution> GUI_RESOLUTION = Property.create(null, RenderResolution::parse).addValueChangeListener(value -> guiResolutionChanged());
 	public static final BooleanProperty GUI_KEEP_ASPECT_RATIO = new BooleanPropertyImpl(false) {
 		@Override
 		public void setBoolean(boolean value) {
 			if(value != getBoolean()) {
 				super.setBoolean(value);
-				guiResolutionNeedsUpdate = true;
+				guiResolutionChanged();
 			}
 		};
 	};
+
+	private static void guiResolutionChanged() {
+		guiResolutionNeedsUpdate = true;
+		guiResolutionGeneration++;
+	}
 	public static Property<MonitorInfo> LAST_FULLSCREEN_MONITOR = Property.create(null, MonitorInfo::fromConfigString).addValueChangeListener(value -> {
 		debugPrint("Change fullscreen monitor: " + value.toConfigString());
 		CONFIG.save();
@@ -135,6 +150,7 @@ public class FullscreenFix {
 		CONFIG.add("renderResolutionSharpScaling", SHARP_SCALING);
 		CONFIG.add("guiResolution", GUI_RESOLUTION);
 		CONFIG.add("guiResolutionKeepAspectRatio", GUI_KEEP_ASPECT_RATIO);
+		CONFIG.add("logCoordinates", LOG_COORDINATES);
 		CONFIG.load();
 	}
 
@@ -465,6 +481,17 @@ public class FullscreenFix {
 	
 	////////////////////////////////////
 	
+	/**
+	 * Reports the sizes the game is working with. Off by default: it is only of interest when the gui
+	 * or the cursor ends up somewhere unexpected, and that is the one thing about this mod that cannot
+	 * be reproduced without the setup it happens on.
+	 */
+	public static void printCoordinates(String string) {
+		if(LOG_COORDINATES.getBoolean()) {
+			print(string);
+		}
+	}
+
 	public static void debugPrint(String string) {
 		if(INDEV) {
 			System.out.print("[FullscreenFixDebug] " + string + "\n");

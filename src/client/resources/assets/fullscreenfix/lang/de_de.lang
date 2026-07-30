@@ -33,6 +33,8 @@ option.captureCursorInFullscreen=Mauszeiger einfangen
 option.captureCursorInFullscreen.tooltip=Fängt den Mauszeiger im Spielfenster ein und verhindert, dass er im Vollbildmodus auf einen anderen Bildschirm bewegt wird.
 option.configScreenHotkeyEnabled=Konfigurationsmenü-Tastenkombination
 option.configScreenHotkeyEnabled.tooltip=Wenn aktiviert, kann das Konfigurationsmenü geöffnet werden, indem man STRG und die Vollbildtaste drückt. Das Konfigurationsmenü kann auch mit der Mod "Mod Menu" geöffnet werden.
+option.logCoordinates=Koordinaten protokollieren
+option.logCoordinates.tooltip=Schreibt die Größen, mit denen das Spiel arbeitet, bei jeder Änderung in das Protokoll, einschließlich der beiden Verhältnisse, die übereinstimmen müssen, damit Klicks dort landen, wo die Benutzeroberfläche gezeichnet wird. Nur nützlich, wenn etwas an der falschen Stelle erscheint.
 
 value.fullscreenResolution.default=Standard
 value.renderResolution.default=Standard

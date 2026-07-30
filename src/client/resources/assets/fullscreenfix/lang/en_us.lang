@@ -33,6 +33,8 @@ option.captureCursorInFullscreen=Capture Cursor
 option.captureCursorInFullscreen.tooltip=Captures the cursor and prevents it from being moved onto another monitor when in fullscreen
 option.configScreenHotkeyEnabled=Config Screen Hotkey
 option.configScreenHotkeyEnabled.tooltip=When enabled, the config screen can be opened by pressing CTRL and the fullscreen key. The config screen can also be opened with the "Mod Menu" mod
+option.logCoordinates=Log Coordinates
+option.logCoordinates.tooltip=Writes the sizes the game is working with to the log whenever they change, including the two ratios that have to agree for clicking to land where the gui is drawn. Only useful when something ends up in the wrong place
 
 value.fullscreenResolution.default=Default
 value.renderResolution.default=Default
