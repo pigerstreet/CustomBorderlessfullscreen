@@ -20,6 +20,8 @@ import b100.lib.client.gui.screen.GuiScreen;
 import b100.lib.client.gui.util.GuiUtils;
 import b100.lib.client.mixin.IScreen;
 import b100.lib.config.property.Property;
+import com.mojang.blaze3d.platform.Window;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -88,6 +90,12 @@ public class RenderResolutionMenu extends GuiScreen {
 	 */
 	protected final Property<RenderResolution> property;
 
+	/**
+	 * Whether to show the gui coordinate space each entry would produce. That is the whole point of a
+	 * gui resolution, but it says nothing useful about a render resolution.
+	 */
+	protected final boolean showGuiSize;
+
 	public RenderResolutionMenu(IScreen parentScreen) {
 		this(parentScreen, FullscreenFix.RENDER_RESOLUTION, "screen.renderResolution.title");
 	}
@@ -96,6 +104,7 @@ public class RenderResolutionMenu extends GuiScreen {
 		super(parentScreen);
 
 		this.property = property;
+		this.showGuiSize = property == FullscreenFix.GUI_RESOLUTION;
 		this.title = FullscreenFix.TRANS.asText(titleKey);
 	}
 
@@ -119,7 +128,8 @@ public class RenderResolutionMenu extends GuiScreen {
 		widthField.addActionListener((e) -> onTextChanged());
 		heightField.addActionListener((e) -> onTextChanged());
 
-		final MonitorInfo monitor = new MonitorInfo(GLFW.glfwGetPrimaryMonitor());
+		// The monitor the window is actually on, which is not necessarily the primary one
+		final MonitorInfo monitor = MonitorInfo.getMonitor(Minecraft.getInstance().getWindow().handle());
 
 		resolutionList.add(new ResolutionElement(this, null, monitor));
 		for(RenderResolution resolution : getResolutions(monitor)) {
@@ -378,16 +388,50 @@ public class RenderResolutionMenu extends GuiScreen {
 			super(screen);
 			this.resolution = resolution;
 
+			StringBuilder str = new StringBuilder();
+
 			if(resolution == null) {
-				this.text = FullscreenFix.TRANS.asText("value.renderResolution.default");
+				str.append(FullscreenFix.TRANS.asString("value.renderResolution.default"));
 			}else {
-				StringBuilder str = new StringBuilder();
 				str.append(resolution.width).append(" x ").append(resolution.height);
 				str.append(" (").append(getAspectRatio(resolution.width, resolution.height)).append(')');
 				if(resolution.width == monitor.width && resolution.height == monitor.height) {
 					str.append(" - ").append(FullscreenFix.TRANS.asString("value.renderResolution.native"));
 				}
-				this.text = Component.nullToEmpty(str.toString());
+			}
+
+			if(showGuiSize) {
+				appendGuiSize(str, resolution);
+			}
+
+			this.text = Component.nullToEmpty(str.toString());
+		}
+
+		/**
+		 * Shows the size of the gui coordinate space this resolution would produce, which is the number
+		 * that actually decides where a hud ends up. Picking a gui resolution is really picking one of
+		 * these, so it is worth not making the user work it out from the gui scale.
+		 */
+		private void appendGuiSize(StringBuilder str, RenderResolution resolution) {
+			final Window window = Minecraft.getInstance().getWindow();
+			final int guiScale = window.getGuiScale();
+			if(guiScale <= 0) {
+				return;
+			}
+
+			final int width = resolution != null ? resolution.width : window.getWidth();
+			final int height = resolution != null ? resolution.height : window.getHeight();
+			if(width <= 0 || height <= 0) {
+				return;
+			}
+
+			final int guiWidth = FullscreenFix.toGuiScaledSize((double) width / guiScale);
+			final int guiHeight = FullscreenFix.toGuiScaledSize((double) height / guiScale);
+
+			str.append(" -> ").append(guiWidth).append('x').append(guiHeight);
+
+			if(guiWidth == window.getGuiScaledWidth() && guiHeight == window.getGuiScaledHeight()) {
+				str.append(' ').append(FullscreenFix.TRANS.asString("value.renderResolution.current"));
 			}
 		}
 

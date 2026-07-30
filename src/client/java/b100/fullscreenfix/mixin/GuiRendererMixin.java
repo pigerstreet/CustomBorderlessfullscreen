@@ -137,6 +137,8 @@ public class GuiRendererMixin {
 				&& FullscreenFix.guiResolutionGeneration == pixelsPerUnitForGeneration) {
 			return;
 		}
+		// Suspending is handled by the callers, which do nothing at all while the gui resolution is
+		// not being applied, so it does not need to be part of the key here
 
 		pixelsPerUnitForWidth = window.width;
 		pixelsPerUnitForHeight = window.height;

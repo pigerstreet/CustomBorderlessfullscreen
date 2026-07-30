@@ -127,6 +127,16 @@ public class FullscreenFix {
 		};
 	};
 
+	public static final BooleanProperty GUI_HUD_ONLY = new BooleanPropertyImpl(false) {
+		@Override
+		public void setBoolean(boolean value) {
+			if(value != getBoolean()) {
+				super.setBoolean(value);
+				guiResolutionChanged();
+			}
+		};
+	};
+
 	private static void guiResolutionChanged() {
 		guiResolutionNeedsUpdate = true;
 		guiResolutionGeneration++;
@@ -150,6 +160,7 @@ public class FullscreenFix {
 		CONFIG.add("renderResolutionSharpScaling", SHARP_SCALING);
 		CONFIG.add("guiResolution", GUI_RESOLUTION);
 		CONFIG.add("guiResolutionKeepAspectRatio", GUI_KEEP_ASPECT_RATIO);
+		CONFIG.add("guiResolutionHudOnly", GUI_HUD_ONLY);
 		CONFIG.add("logCoordinates", LOG_COORDINATES);
 		CONFIG.load();
 	}
@@ -307,7 +318,28 @@ public class FullscreenFix {
 	 * window of this size end up in the same places again without having to upscale the whole frame.
 	 */
 	public static RenderResolution getActiveGuiResolution() {
+		if(isGuiResolutionSuspended()) {
+			return null;
+		}
 		return GUI_RESOLUTION.get();
+	}
+
+	/**
+	 * Whether the gui resolution is deliberately not being applied right now.
+	 *
+	 * A hud that was positioned at a different resolution is the reason for this option existing, but
+	 * menus have no such problem and a gui resolution of a different shape than the window stretches
+	 * them. Applying it only while no screen is open leaves menus exactly as they are without the mod.
+	 *
+	 * The instance is null for as long as the window is being created, which is before any screen can
+	 * exist, so that counts as nothing being open.
+	 */
+	public static boolean isGuiResolutionSuspended() {
+		if(!GUI_HUD_ONLY.getBoolean()) {
+			return false;
+		}
+		final Minecraft minecraft = Minecraft.getInstance();
+		return minecraft != null && minecraft.screen != null;
 	}
 
 	/**

@@ -203,12 +203,6 @@ public abstract class WindowMixin {
 			return;
 		}
 
-		if(effectiveWidth != guiScaledWidth || effectiveHeight != guiScaledHeight) {
-			FullscreenFix.print("Gui size field is " + guiScaledWidth + "x" + guiScaledHeight
-					+ " but reads as " + effectiveWidth + "x" + effectiveHeight
-					+ ", something else is writing it");
-		}
-
 		final double extentWidth = FullscreenFix.getGuiExtentWidth(framebufferWidth, framebufferHeight, guiScale);
 		final double extentHeight = FullscreenFix.getGuiExtentHeight(framebufferWidth, framebufferHeight, guiScale);
 		if(extentWidth <= 0.0 || extentHeight <= 0.0) {
@@ -350,6 +344,7 @@ public abstract class WindowMixin {
 	private int cachedGuiSizeForHeight = -1;
 	private int cachedGuiSizeForScale = -1;
 	private int cachedGuiSizeForGeneration = -1;
+	private boolean cachedGuiSizeSuspended = false;
 	private int cachedGuiScaledWidth = -1;
 	private int cachedGuiScaledHeight = -1;
 
@@ -367,7 +362,7 @@ public abstract class WindowMixin {
 	 */
 	@ModifyReturnValue(method = "getGuiScaledWidth", at = @At("RETURN"))
 	private int guiResolutionScaledWidth(int original) {
-		if(FullscreenFix.getActiveGuiResolution() == null) {
+		if(FullscreenFix.GUI_RESOLUTION.get() == null) {
 			return original;
 		}
 		refreshGuiSize();
@@ -376,7 +371,7 @@ public abstract class WindowMixin {
 
 	@ModifyReturnValue(method = "getGuiScaledHeight", at = @At("RETURN"))
 	private int guiResolutionScaledHeight(int original) {
-		if(FullscreenFix.getActiveGuiResolution() == null) {
+		if(FullscreenFix.GUI_RESOLUTION.get() == null) {
 			return original;
 		}
 		refreshGuiSize();
@@ -388,9 +383,12 @@ public abstract class WindowMixin {
 	 * depends on changes.
 	 */
 	private void refreshGuiSize() {
+		final boolean suspended = FullscreenFix.isGuiResolutionSuspended();
+
 		if(framebufferWidth == cachedGuiSizeForWidth && framebufferHeight == cachedGuiSizeForHeight
 				&& guiScale == cachedGuiSizeForScale
-				&& FullscreenFix.guiResolutionGeneration == cachedGuiSizeForGeneration) {
+				&& FullscreenFix.guiResolutionGeneration == cachedGuiSizeForGeneration
+				&& suspended == cachedGuiSizeSuspended) {
 			return;
 		}
 
@@ -398,8 +396,13 @@ public abstract class WindowMixin {
 		cachedGuiSizeForHeight = framebufferHeight;
 		cachedGuiSizeForScale = guiScale;
 		cachedGuiSizeForGeneration = FullscreenFix.guiResolutionGeneration;
+		cachedGuiSizeSuspended = suspended;
 		cachedGuiScaledWidth = FullscreenFix.toGuiScaledSize(FullscreenFix.getGuiExtentWidth(framebufferWidth, framebufferHeight, guiScale));
 		cachedGuiScaledHeight = FullscreenFix.toGuiScaledSize(FullscreenFix.getGuiExtentHeight(framebufferWidth, framebufferHeight, guiScale));
+
+		// Kept in step for anything that reads the fields directly rather than through the getters
+		guiScaledWidth = cachedGuiScaledWidth;
+		guiScaledHeight = cachedGuiScaledHeight;
 	}
 
 	/**

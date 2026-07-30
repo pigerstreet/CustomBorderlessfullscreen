@@ -39,10 +39,20 @@ public class MixinPlugin implements IMixinConfigPlugin {
 
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-		if(mixinsThatRequireModEnabled.contains(Global.MIXIN_PACKAGE + "." + mixinClassName)) {
+		if(mixinsThatRequireModEnabled.contains(simpleName(mixinClassName))) {
 			return Global.MOD_ENABLED;
 		}
 		return true;
+	}
+
+	/**
+	 * The mixin class name arrives fully qualified, while the names above are listed without their
+	 * package. Prefixing the qualified name with the package again, as this used to, produced a name
+	 * that could never match, so every mixin applied even with the mod turned off in the config.
+	 */
+	private static String simpleName(String className) {
+		final int i = className.lastIndexOf('.');
+		return i < 0 ? className : className.substring(i + 1);
 	}
 
 	@Override

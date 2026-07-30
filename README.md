@@ -26,6 +26,20 @@ Use the **Render Resolution** instead when the point is to actually render fewer
 
 A gui resolution whose shape differs from the window is stretched to fit it, because that is what keeps hud positions exact. **GUI Keep Aspect Ratio** scales it evenly instead, which distorts nothing but means positions along the wider axis no longer match.
 
+**GUI Resolution: HUD Only** applies the gui resolution only while no screen is open. Menus have no misplaced hud to fix, and stretching them to a different shape is pure downside, so with this on they are laid out and drawn exactly as they are without the mod. The cost is that the hud goes back to its normal size for as long as any screen is open, chat included, because the hud and the screen on top of it share one projection per frame.
+
+The resolution picker lists the gui coordinate space each entry produces, as `-> 574x360`, and marks the one matching the current space with `(now)`. That space is the number that actually decides where a hud lands, so the entry to pick is the one whose space matches what the hud was set up in.
+
+### When something ends up in the wrong place
+
+Turn on **Log Coordinates**. It reports the sizes the game is working with, and in particular the two independent ways a gui coordinate becomes a pixel:
+
+```
+Pixels per gui unit: cursor uses 4.125 x 3.667, drawing uses 4.130 x 3.667 (off by 1.001 x 1.0, 1.0 is correct)
+```
+
+Cursor positions are scaled by the gui size over the window size in screen coordinates; drawing is scaled by the window in pixels over the projection extent. Those come from different fields via different code, and they have to agree. A factor of about 1.001 is normal, and is present in vanilla too, because the gui size is rounded up to whole units while the extent is not. Anything larger means clicking lands somewhere other than what is on screen.
+
 For the Counter-Strike style setup:
 
 - Exclusive Fullscreen: **off**

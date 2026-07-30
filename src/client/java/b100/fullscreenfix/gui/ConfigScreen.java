@@ -72,6 +72,7 @@ public class ConfigScreen extends GuiScrollListScreen {
 			.setToTextFunction((resolution) -> resolution != null ? Component.literal(resolution.toString()) : FullscreenFix.TRANS.asText("value.renderResolution.default")));
 
 			scrollList.add(BooleanToggleElement.create(this, "option.guiResolutionKeepAspectRatio", FullscreenFix.GUI_KEEP_ASPECT_RATIO, UpdateMode.ON_SAVE));
+			scrollList.add(BooleanToggleElement.create(this, "option.guiResolutionHudOnly", FullscreenFix.GUI_HUD_ONLY, UpdateMode.ON_SAVE));
 
 			scrollList.add(BooleanToggleElement.create(this, "option.replaceVideoSettings", FullscreenFix.REPLACE_VIDEO_SETTINGS_BUTTON, UpdateMode.ON_SAVE));
 			scrollList.add(BooleanToggleElement.create(this, "option.configScreenHotkeyEnabled", FullscreenFix.CONFIG_SCREEN_HOTKEY_ENABLED, UpdateMode.ON_SAVE));
