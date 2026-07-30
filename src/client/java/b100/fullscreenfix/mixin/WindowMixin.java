@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.Global;
@@ -192,8 +193,20 @@ public abstract class WindowMixin {
 	 * whole units while the projection extent is not.
 	 */
 	private void logCursorAgainstDrawing() {
-		if(guiScaledWidth <= 0 || guiScaledHeight <= 0 || width <= 0 || height <= 0) {
+		final Window window = (Window)(Object)this;
+
+		// What everything else actually sees, which is not necessarily what is in the field
+		final int effectiveWidth = window.getGuiScaledWidth();
+		final int effectiveHeight = window.getGuiScaledHeight();
+
+		if(effectiveWidth <= 0 || effectiveHeight <= 0 || width <= 0 || height <= 0) {
 			return;
+		}
+
+		if(effectiveWidth != guiScaledWidth || effectiveHeight != guiScaledHeight) {
+			FullscreenFix.print("Gui size field is " + guiScaledWidth + "x" + guiScaledHeight
+					+ " but reads as " + effectiveWidth + "x" + effectiveHeight
+					+ ", something else is writing it");
 		}
 
 		final double extentWidth = FullscreenFix.getGuiExtentWidth(framebufferWidth, framebufferHeight, guiScale);
@@ -202,8 +215,8 @@ public abstract class WindowMixin {
 			return;
 		}
 
-		final double cursorX = (double) width / guiScaledWidth;
-		final double cursorY = (double) height / guiScaledHeight;
+		final double cursorX = (double) width / effectiveWidth;
+		final double cursorY = (double) height / effectiveHeight;
 		final double drawnX = framebufferWidth / extentWidth;
 		final double drawnY = framebufferHeight / extentHeight;
 
@@ -333,6 +346,59 @@ public abstract class WindowMixin {
 		guiScaledHeight = FullscreenFix.toGuiScaledSize(FullscreenFix.getGuiExtentHeight(framebufferWidth, framebufferHeight, guiScale));
 	}
 
+	private int cachedGuiSizeForWidth = -1;
+	private int cachedGuiSizeForHeight = -1;
+	private int cachedGuiSizeForScale = -1;
+	private int cachedGuiScaledWidth = -1;
+	private int cachedGuiScaledHeight = -1;
+
+	/**
+	 * The size of the gui coordinate space, as everything else sees it.
+	 *
+	 * Overriding the field in {@link #onSetGuiScale} is not enough on its own. Whoever writes that
+	 * field last wins, and with other mods installed that is not necessarily this mod, while the
+	 * projection the gui is drawn with always comes from {@link GuiRendererMixin}. If the two ever
+	 * disagree, clicking and hovering land somewhere other than what is on screen.
+	 *
+	 * Answering from the same function the projection is built from removes that possibility: the
+	 * coordinate space the gui is laid out and clicked in cannot drift away from the one it is drawn
+	 * with, whatever else touches the field.
+	 */
+	@ModifyReturnValue(method = "getGuiScaledWidth", at = @At("RETURN"))
+	private int guiResolutionScaledWidth(int original) {
+		if(FullscreenFix.getActiveGuiResolution() == null) {
+			return original;
+		}
+		refreshGuiSize();
+		return cachedGuiScaledWidth;
+	}
+
+	@ModifyReturnValue(method = "getGuiScaledHeight", at = @At("RETURN"))
+	private int guiResolutionScaledHeight(int original) {
+		if(FullscreenFix.getActiveGuiResolution() == null) {
+			return original;
+		}
+		refreshGuiSize();
+		return cachedGuiScaledHeight;
+	}
+
+	/**
+	 * These getters are called many times per frame, so the result is kept until one of the things it
+	 * depends on changes. Changing the option itself does not change any of them, so
+	 * {@link #applyGuiResolution} clears the cache directly.
+	 */
+	private void refreshGuiSize() {
+		if(framebufferWidth == cachedGuiSizeForWidth && framebufferHeight == cachedGuiSizeForHeight && guiScale == cachedGuiSizeForScale) {
+			return;
+		}
+
+		cachedGuiSizeForWidth = framebufferWidth;
+		cachedGuiSizeForHeight = framebufferHeight;
+		cachedGuiSizeForScale = guiScale;
+		cachedGuiScaledWidth = FullscreenFix.toGuiScaledSize(FullscreenFix.getGuiExtentWidth(framebufferWidth, framebufferHeight, guiScale));
+		cachedGuiScaledHeight = FullscreenFix.toGuiScaledSize(FullscreenFix.getGuiExtentHeight(framebufferWidth, framebufferHeight, guiScale));
+	}
+
 	/**
 	 * Makes the automatic gui scale, and the largest one the options slider offers, follow the gui
 	 * resolution. Both exist to stop the gui becoming unusably large for the space it has, and with a
@@ -356,6 +422,9 @@ public abstract class WindowMixin {
 	 * gui resolution is turned off.
 	 */
 	private void applyGuiResolution() {
+		// The option changed, not anything the cached size is keyed on
+		cachedGuiSizeForScale = -1;
+
 		((Window)(Object)this).setGuiScale(guiScale);
 
 		RenderResolution resolution = FullscreenFix.getActiveGuiResolution();
