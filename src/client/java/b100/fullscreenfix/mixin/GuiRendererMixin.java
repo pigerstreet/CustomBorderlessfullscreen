@@ -7,9 +7,11 @@ import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.sugar.Local;
 
 import b100.fullscreenfix.FullscreenFix;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.GuiRenderer;
 import net.minecraft.client.renderer.state.WindowRenderState;
 
@@ -77,6 +79,44 @@ public class GuiRendererMixin {
 				+ " over viewport " + window.width + "x" + window.height
 				+ ", one gui unit is " + (window.width / extentWidth) + " x " + (window.height / extentHeight) + " pixels"
 				+ ", item scale " + FullscreenFix.getEffectiveGuiScale(window.width, window.height, window.guiScale));
+	}
+
+	/**
+	 * Converts a scissor rectangle from gui coordinates into pixels using the real size of a gui unit.
+	 *
+	 * Vanilla multiplies by the gui scale, because normally a gui unit is exactly that many pixels
+	 * across. A custom gui resolution breaks that: the gui still lays itself out in whole units, but
+	 * each one now covers a different, and not necessarily equal in both axes, number of pixels. Left
+	 * alone, every clipped part of the gui gets cut to the wrong rectangle.
+	 *
+	 * The edges are rounded outwards rather than truncated so that rounding can only ever leave a
+	 * scissor slightly too large, never cutting into what it is meant to be clipping.
+	 */
+	@ModifyArgs(method = "enableScissor", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderPass;enableScissor(IIII)V"))
+	private void scaleScissorToGuiResolution(Args args, @Local(argsOnly = true) ScreenRectangle rectangle) {
+		if(FullscreenFix.getActiveGuiResolution() == null) {
+			return;
+		}
+
+		final WindowRenderState window = getWindowRenderState();
+		if(window == null || window.guiScale <= 0 || window.width <= 0 || window.height <= 0) {
+			return;
+		}
+
+		final double pixelsPerUnitX = window.width / FullscreenFix.getGuiExtentWidth(window.width, window.height, window.guiScale);
+		final double pixelsPerUnitY = window.height / FullscreenFix.getGuiExtentHeight(window.width, window.height, window.guiScale);
+
+		final int left = (int) Math.floor(rectangle.left() * pixelsPerUnitX);
+		final int right = (int) Math.ceil(rectangle.right() * pixelsPerUnitX);
+
+		// Scissor coordinates start at the bottom of the window, gui coordinates at the top
+		final int bottom = (int) Math.floor(window.height - rectangle.bottom() * pixelsPerUnitY);
+		final int top = (int) Math.ceil(window.height - rectangle.top() * pixelsPerUnitY);
+
+		args.set(0, left);
+		args.set(1, bottom);
+		args.set(2, Math.max(0, right - left));
+		args.set(3, Math.max(0, top - bottom));
 	}
 
 	/**
