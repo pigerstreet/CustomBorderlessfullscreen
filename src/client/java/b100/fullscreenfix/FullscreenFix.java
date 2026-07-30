@@ -38,6 +38,7 @@ public class FullscreenFix {
 	public static boolean windowNeedsUpdate = true;
 	public static boolean fullscreenModeWasChanged = false;
 	public static boolean renderResolutionNeedsUpdate = false;
+	public static boolean guiResolutionNeedsUpdate = false;
 
 	/**
 	 * The actual size of the window framebuffer, in pixels.
@@ -59,6 +60,14 @@ public class FullscreenFix {
 	 */
 	public static int realScreenWidth = 0;
 	public static int realScreenHeight = 0;
+
+	/**
+	 * Upper limit for the scale item icons and picture in picture elements are rendered at.
+	 *
+	 * A gui resolution much smaller than the window asks for a very large scale, and every step costs
+	 * video memory in the item atlas without being visible, so it is worth stopping somewhere.
+	 */
+	private static final int MAX_EFFECTIVE_GUI_SCALE = 8;
 	
 	// Config
 	public static final PropertiesFile CONFIG = new PropertiesFile(Global.CONFIG_FILE);
@@ -97,6 +106,16 @@ public class FullscreenFix {
 	public static Property<RenderResolution> RENDER_RESOLUTION = Property.create(null, RenderResolution::parse).addValueChangeListener(value -> renderResolutionNeedsUpdate = true);
 	public static final BooleanProperty KEEP_ASPECT_RATIO = new BooleanPropertyImpl(false);
 	public static final BooleanProperty SHARP_SCALING = new BooleanPropertyImpl(false);
+	public static Property<RenderResolution> GUI_RESOLUTION = Property.create(null, RenderResolution::parse).addValueChangeListener(value -> guiResolutionNeedsUpdate = true);
+	public static final BooleanProperty GUI_KEEP_ASPECT_RATIO = new BooleanPropertyImpl(false) {
+		@Override
+		public void setBoolean(boolean value) {
+			if(value != getBoolean()) {
+				super.setBoolean(value);
+				guiResolutionNeedsUpdate = true;
+			}
+		};
+	};
 	public static Property<MonitorInfo> LAST_FULLSCREEN_MONITOR = Property.create(null, MonitorInfo::fromConfigString).addValueChangeListener(value -> {
 		debugPrint("Change fullscreen monitor: " + value.toConfigString());
 		CONFIG.save();
@@ -114,6 +133,8 @@ public class FullscreenFix {
 		CONFIG.add("renderResolution", RENDER_RESOLUTION);
 		CONFIG.add("renderResolutionKeepAspectRatio", KEEP_ASPECT_RATIO);
 		CONFIG.add("renderResolutionSharpScaling", SHARP_SCALING);
+		CONFIG.add("guiResolution", GUI_RESOLUTION);
+		CONFIG.add("guiResolutionKeepAspectRatio", GUI_KEEP_ASPECT_RATIO);
 		CONFIG.load();
 	}
 
@@ -261,6 +282,98 @@ public class FullscreenFix {
 		return resolution.height / presentedHeight;
 	}
 	
+	/**
+	 * The window size the gui and the hud are laid out for, or null to lay them out for the real
+	 * window like vanilla does.
+	 *
+	 * This is not a render resolution: the game keeps rendering at the real size of the window, only
+	 * the coordinate space the gui is placed in changes. That makes a hud that was positioned in a
+	 * window of this size end up in the same places again without having to upscale the whole frame.
+	 */
+	public static RenderResolution getActiveGuiResolution() {
+		return GUI_RESOLUTION.get();
+	}
+
+	/**
+	 * The width of the gui coordinate space, in gui units.
+	 *
+	 * Vanilla uses framebufferWidth / guiScale, both for the size of the space that gui code lays
+	 * itself out in and for the projection that space is drawn with. A custom gui resolution only
+	 * replaces the numerator, so every position works out exactly as it would in a window of that
+	 * size, while the projection still covers the whole of the real window.
+	 *
+	 * The gui resolution rarely has the same shape as the window, so by default the space is
+	 * stretched to fill it. That is what keeps positions exact. Keeping the aspect ratio instead
+	 * scales both axes by the same amount, which does not distort anything but does change the
+	 * coordinate space in one axis, so positions along that axis drift.
+	 */
+	public static double getGuiExtentWidth(int viewportWidth, int viewportHeight, int guiScale) {
+		RenderResolution resolution = getActiveGuiResolution();
+		if(resolution == null || guiScale <= 0) {
+			return (double) viewportWidth / Math.max(1, guiScale);
+		}
+		if(!GUI_KEEP_ASPECT_RATIO.getBoolean()) {
+			return (double) resolution.width / guiScale;
+		}
+		return viewportWidth / getGuiUniformScale(resolution, viewportWidth, viewportHeight, guiScale);
+	}
+
+	public static double getGuiExtentHeight(int viewportWidth, int viewportHeight, int guiScale) {
+		RenderResolution resolution = getActiveGuiResolution();
+		if(resolution == null || guiScale <= 0) {
+			return (double) viewportHeight / Math.max(1, guiScale);
+		}
+		if(!GUI_KEEP_ASPECT_RATIO.getBoolean()) {
+			return (double) resolution.height / guiScale;
+		}
+		return viewportHeight / getGuiUniformScale(resolution, viewportWidth, viewportHeight, guiScale);
+	}
+
+	/**
+	 * The single scale used when the aspect ratio is kept. Fitting the gui resolution inside the
+	 * window rather than covering it means the coordinate space is never smaller than the one the hud
+	 * was placed in, so nothing that used to be on screen ends up outside it.
+	 */
+	private static double getGuiUniformScale(RenderResolution resolution, int viewportWidth, int viewportHeight, int guiScale) {
+		final double fit = Math.min((double) viewportWidth / resolution.width,
+				(double) viewportHeight / resolution.height);
+		if(fit <= 0.0) {
+			return guiScale;
+		}
+		return guiScale * fit;
+	}
+
+	/**
+	 * The size of a gui unit in real pixels, rounded up to a whole number.
+	 *
+	 * Item icons and the picture in picture elements are not drawn as geometry, they are rendered
+	 * into their own textures at a size taken from the gui scale and then drawn into the gui at
+	 * whatever size the coordinate space asks for. A custom gui resolution makes a gui unit larger
+	 * than the gui scale suggests, so those textures have to be rendered larger to match, otherwise
+	 * they are the one part of the gui that ends up blurry.
+	 */
+	public static int getEffectiveGuiScale(int viewportWidth, int viewportHeight, int guiScale) {
+		if(getActiveGuiResolution() == null || guiScale <= 0) {
+			return guiScale;
+		}
+
+		final double extentWidth = getGuiExtentWidth(viewportWidth, viewportHeight, guiScale);
+		final double extentHeight = getGuiExtentHeight(viewportWidth, viewportHeight, guiScale);
+		if(extentWidth <= 0.0 || extentHeight <= 0.0) {
+			return guiScale;
+		}
+
+		final double scale = Math.max(viewportWidth / extentWidth, viewportHeight / extentHeight);
+		return Mth.clamp((int) Math.ceil(scale), guiScale, MAX_EFFECTIVE_GUI_SCALE);
+	}
+
+	/**
+	 * The size of the gui coordinate space in whole gui units, matching how vanilla rounds it.
+	 */
+	public static int toGuiScaledSize(double extent) {
+		return Math.max(1, (int) Math.ceil(extent));
+	}
+
 	public static void setWindow(Window window) {
 		FullscreenFix.window = window;
 	}

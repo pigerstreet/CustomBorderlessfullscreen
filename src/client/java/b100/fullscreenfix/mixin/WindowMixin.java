@@ -5,6 +5,7 @@ import static org.lwjgl.glfw.GLFW.*;
 import java.util.Optional;
 
 import org.lwjgl.glfw.GLFWVidMode;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,6 +14,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.Global;
@@ -118,6 +121,10 @@ public abstract class WindowMixin {
 		if(FullscreenFix.renderResolutionNeedsUpdate) {
 			FullscreenFix.renderResolutionNeedsUpdate = false;
 			applyRenderResolution();
+		}
+		if(FullscreenFix.guiResolutionNeedsUpdate) {
+			FullscreenFix.guiResolutionNeedsUpdate = false;
+			applyGuiResolution();
 		}
 		logCoordinateState();
 	}
@@ -274,6 +281,59 @@ public abstract class WindowMixin {
 		eventHandler.resizeGui();
 	}
 	
+	/**
+	 * Replaces the size of the gui coordinate space with the one a custom gui resolution asks for.
+	 *
+	 * This is the only place vanilla derives these two from the framebuffer size, and everything that
+	 * lays out a gui or a hud reads them, so overriding them here is enough to move the whole gui into
+	 * the coordinate space of a differently sized window. The projection it gets drawn with is handled
+	 * separately in {@link GuiRendererMixin}, from the same numbers.
+	 */
+	@Inject(method = "setGuiScale", at = @At("TAIL"))
+	private void onSetGuiScale(int newGuiScale, CallbackInfo ci) {
+		if(FullscreenFix.getActiveGuiResolution() == null) {
+			return;
+		}
+		guiScaledWidth = FullscreenFix.toGuiScaledSize(FullscreenFix.getGuiExtentWidth(framebufferWidth, framebufferHeight, guiScale));
+		guiScaledHeight = FullscreenFix.toGuiScaledSize(FullscreenFix.getGuiExtentHeight(framebufferWidth, framebufferHeight, guiScale));
+	}
+
+	/**
+	 * Makes the automatic gui scale, and the largest one the options slider offers, follow the gui
+	 * resolution. Both exist to stop the gui becoming unusably large for the space it has, and with a
+	 * custom gui resolution that space is the gui resolution rather than the window.
+	 */
+	@ModifyExpressionValue(method = "calculateScale", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lcom/mojang/blaze3d/platform/Window;framebufferWidth:I"))
+	private int guiResolutionScaleWidth(int realWidth) {
+		RenderResolution resolution = FullscreenFix.getActiveGuiResolution();
+		return resolution == null ? realWidth : resolution.width;
+	}
+
+	@ModifyExpressionValue(method = "calculateScale", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lcom/mojang/blaze3d/platform/Window;framebufferHeight:I"))
+	private int guiResolutionScaleHeight(int realHeight) {
+		RenderResolution resolution = FullscreenFix.getActiveGuiResolution();
+		return resolution == null ? realHeight : resolution.height;
+	}
+
+	/**
+	 * Applies a gui resolution that was changed while the game is running. Running the vanilla method
+	 * again recomputes the coordinate space from scratch, so this also puts it back to normal when the
+	 * gui resolution is turned off.
+	 */
+	private void applyGuiResolution() {
+		((Window)(Object)this).setGuiScale(guiScale);
+
+		RenderResolution resolution = FullscreenFix.getActiveGuiResolution();
+		if(resolution == null) {
+			FullscreenFix.print("Gui resolution turned off, laying the gui out for " + framebufferWidth + " x " + framebufferHeight + " again");
+		}else {
+			FullscreenFix.print("Laying the gui out for " + resolution.width + " x " + resolution.height
+					+ " (window is " + framebufferWidth + " x " + framebufferHeight + "), gui is " + guiScaledWidth + " x " + guiScaledHeight);
+		}
+
+		eventHandler.resizeGui();
+	}
+
 	@Inject(method = "setMode", at = @At(value = "HEAD"), cancellable = true)
 	private void onUpdateWindowRegion(CallbackInfo ci) {
 		FullscreenFix.debugPrint("Update Window Region");

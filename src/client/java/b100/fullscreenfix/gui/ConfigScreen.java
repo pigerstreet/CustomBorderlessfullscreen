@@ -23,6 +23,7 @@ public class ConfigScreen extends GuiScrollListScreen {
 
 	private CustomOptionElement<VideoMode> fullscreenResolutionButton;
 	private CustomOptionElement<RenderResolution> renderResolutionButton;
+	private CustomOptionElement<RenderResolution> guiResolutionButton;
 	
 	public ConfigScreen(IScreen parentScreen) {
 		super(parentScreen);
@@ -66,6 +67,12 @@ public class ConfigScreen extends GuiScrollListScreen {
 			scrollList.add(BooleanToggleElement.create(this, "option.renderResolutionKeepAspectRatio", FullscreenFix.KEEP_ASPECT_RATIO, UpdateMode.ON_SAVE));
 			scrollList.add(BooleanToggleElement.create(this, "option.renderResolutionSharpScaling", FullscreenFix.SHARP_SCALING, UpdateMode.ON_SAVE));
 
+			guiResolutionButton = scrollList.add(new CustomOptionElement<>(this, "option.guiResolution", FullscreenFix.GUI_RESOLUTION.get())
+			.addActionListener((e) -> utils.setScreen(new RenderResolutionMenu(this, FullscreenFix.GUI_RESOLUTION, "screen.guiResolution.title")))
+			.setToTextFunction((resolution) -> resolution != null ? Component.literal(resolution.toString()) : FullscreenFix.TRANS.asText("value.renderResolution.default")));
+
+			scrollList.add(BooleanToggleElement.create(this, "option.guiResolutionKeepAspectRatio", FullscreenFix.GUI_KEEP_ASPECT_RATIO, UpdateMode.ON_SAVE));
+
 			scrollList.add(BooleanToggleElement.create(this, "option.replaceVideoSettings", FullscreenFix.REPLACE_VIDEO_SETTINGS_BUTTON, UpdateMode.ON_SAVE));
 			scrollList.add(BooleanToggleElement.create(this, "option.configScreenHotkeyEnabled", FullscreenFix.CONFIG_SCREEN_HOTKEY_ENABLED, UpdateMode.ON_SAVE));
 		}
@@ -93,6 +100,9 @@ public class ConfigScreen extends GuiScrollListScreen {
 		}
 		if(renderResolutionButton != null) {
 			renderResolutionButton.setValue(FullscreenFix.RENDER_RESOLUTION.get());
+		}
+		if(guiResolutionButton != null) {
+			guiResolutionButton.setValue(FullscreenFix.GUI_RESOLUTION.get());
 		}
 		super.onScreenOpened();
 	}

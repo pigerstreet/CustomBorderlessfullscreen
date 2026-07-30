@@ -19,6 +19,7 @@ import b100.lib.client.gui.element.GuiScrollableList.ListLayout;
 import b100.lib.client.gui.screen.GuiScreen;
 import b100.lib.client.gui.util.GuiUtils;
 import b100.lib.client.mixin.IScreen;
+import b100.lib.config.property.Property;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -81,10 +82,21 @@ public class RenderResolutionMenu extends GuiScreen {
 
 	protected boolean initialized = false;
 
+	/**
+	 * The resolution this menu edits. The render resolution and the gui resolution are picked the same
+	 * way, they just get used for different things once applied.
+	 */
+	protected final Property<RenderResolution> property;
+
 	public RenderResolutionMenu(IScreen parentScreen) {
+		this(parentScreen, FullscreenFix.RENDER_RESOLUTION, "screen.renderResolution.title");
+	}
+
+	public RenderResolutionMenu(IScreen parentScreen, Property<RenderResolution> property, String titleKey) {
 		super(parentScreen);
 
-		title = FullscreenFix.TRANS.asText("screen.renderResolution.title");
+		this.property = property;
+		this.title = FullscreenFix.TRANS.asText(titleKey);
 	}
 
 	@Override
@@ -114,7 +126,7 @@ public class RenderResolutionMenu extends GuiScreen {
 			resolutionList.add(new ResolutionElement(this, resolution, monitor));
 		}
 
-		this.previousResolution = FullscreenFix.RENDER_RESOLUTION.get();
+		this.previousResolution = property.get();
 		this.selectedResolution = this.previousResolution;
 
 		initialized = true;
@@ -181,7 +193,7 @@ public class RenderResolutionMenu extends GuiScreen {
 		if(typedValueInvalid) {
 			return;
 		}
-		FullscreenFix.RENDER_RESOLUTION.set(selectedResolution);
+		property.set(selectedResolution);
 		FullscreenFix.CONFIG.save();
 		previousResolution = selectedResolution;
 		updateButtons();

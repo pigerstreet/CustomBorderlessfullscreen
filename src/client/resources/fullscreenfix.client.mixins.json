@@ -6,6 +6,7 @@
 	"client": [
 		"access.WindowAccess",
 		"GlCommandEncoderMixin",
+		"GuiRendererMixin",
 		"InputUtilMixin",
 		"KeyboardMixin",
 		"MouseHandlerMixin",
