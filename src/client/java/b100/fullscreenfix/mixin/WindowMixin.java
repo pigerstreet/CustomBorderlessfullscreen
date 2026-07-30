@@ -169,12 +169,47 @@ public abstract class WindowMixin {
 		loggedRealScreenHeight = FullscreenFix.realScreenHeight;
 		loggedGuiScale = guiScale;
 
-		FullscreenFix.debugPrint("Coordinates:"
+		FullscreenFix.print("Coordinates:"
 				+ " framebuffer=" + framebufferWidth + "x" + framebufferHeight
 				+ " screen=" + width + "x" + height
 				+ " realFramebuffer=" + FullscreenFix.realFramebufferWidth + "x" + FullscreenFix.realFramebufferHeight
 				+ " realScreen=" + FullscreenFix.realScreenWidth + "x" + FullscreenFix.realScreenHeight
 				+ " guiScale=" + guiScale + " guiScaled=" + guiScaledWidth + "x" + guiScaledHeight);
+
+		logCursorAgainstDrawing();
+	}
+
+	/**
+	 * Compares the two ways a gui coordinate gets turned into a pixel, which have to agree.
+	 *
+	 * Cursor positions are scaled with the ratio between the gui size and the window size in screen
+	 * coordinates, while the gui is drawn with the ratio between the window in pixels and the extent
+	 * of the projection. Those are derived from different fields by different code, and if they ever
+	 * disagree then clicking and hovering land somewhere other than what is on screen, which is
+	 * impossible to tell apart from the gui simply being in the wrong place.
+	 *
+	 * A small difference is normal and also present in vanilla, because the gui size is rounded up to
+	 * whole units while the projection extent is not.
+	 */
+	private void logCursorAgainstDrawing() {
+		if(guiScaledWidth <= 0 || guiScaledHeight <= 0 || width <= 0 || height <= 0) {
+			return;
+		}
+
+		final double extentWidth = FullscreenFix.getGuiExtentWidth(framebufferWidth, framebufferHeight, guiScale);
+		final double extentHeight = FullscreenFix.getGuiExtentHeight(framebufferWidth, framebufferHeight, guiScale);
+		if(extentWidth <= 0.0 || extentHeight <= 0.0) {
+			return;
+		}
+
+		final double cursorX = (double) width / guiScaledWidth;
+		final double cursorY = (double) height / guiScaledHeight;
+		final double drawnX = framebufferWidth / extentWidth;
+		final double drawnY = framebufferHeight / extentHeight;
+
+		FullscreenFix.print("Pixels per gui unit: cursor uses " + cursorX + " x " + cursorY
+				+ ", drawing uses " + drawnX + " x " + drawnY
+				+ " (off by " + (drawnX / cursorX) + " x " + (drawnY / cursorY) + ", 1.0 is correct)");
 	}
 
 	/**

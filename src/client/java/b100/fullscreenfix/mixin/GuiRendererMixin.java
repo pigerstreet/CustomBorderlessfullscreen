@@ -75,7 +75,7 @@ public class GuiRendererMixin {
 		loggedViewportWidth = window.width;
 		loggedViewportHeight = window.height;
 
-		FullscreenFix.debugPrint("Gui projection: extent=" + extentWidth + "x" + extentHeight
+		FullscreenFix.print("Gui projection: extent=" + extentWidth + "x" + extentHeight
 				+ " over viewport " + window.width + "x" + window.height
 				+ ", one gui unit is " + (window.width / extentWidth) + " x " + (window.height / extentHeight) + " pixels"
 				+ ", item scale " + FullscreenFix.getEffectiveGuiScale(window.width, window.height, window.guiScale));
