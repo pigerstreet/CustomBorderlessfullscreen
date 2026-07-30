@@ -359,7 +359,8 @@ public class RenderResolutionMenu extends GuiScreen {
 
 	@Override
 	public void onResize() {
-		int listWidth = Math.min(260, width - 20);
+		// The gui size makes the entries noticeably longer, so they get more room to sit in
+		int listWidth = Math.min(showGuiSize ? 330 : 260, width - 20);
 		int x0 = width / 2 - listWidth / 2;
 		int y0 = headerSize + inputSize;
 		int h = height - headerSize - inputSize - footerSize;
