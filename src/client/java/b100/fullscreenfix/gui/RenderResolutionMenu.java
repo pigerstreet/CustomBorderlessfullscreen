@@ -412,28 +412,40 @@ public class RenderResolutionMenu extends GuiScreen {
 		 * Shows the size of the gui coordinate space this resolution would produce, which is the number
 		 * that actually decides where a hud ends up. Picking a gui resolution is really picking one of
 		 * these, so it is worth not making the user work it out from the gui scale.
+		 *
+		 * Keeping the aspect ratio changes that space, so the sizes are worked out the same way the gui
+		 * itself works them out rather than by dividing. Doing the division here made every entry read
+		 * as the space it would produce while stretching, which is not the one it produces with that
+		 * option on, and left nothing marked as current.
+		 *
+		 * The entry marked as current is the one matching the space the hud is laid out in, which with
+		 * HUD Only is not the space this menu itself is in.
 		 */
 		private void appendGuiSize(StringBuilder str, RenderResolution resolution) {
 			final Window window = Minecraft.getInstance().getWindow();
 			final int guiScale = window.getGuiScale();
-			if(guiScale <= 0) {
+			final int viewportWidth = window.getWidth();
+			final int viewportHeight = window.getHeight();
+			if(guiScale <= 0 || viewportWidth <= 0 || viewportHeight <= 0) {
 				return;
 			}
 
-			final int width = resolution != null ? resolution.width : window.getWidth();
-			final int height = resolution != null ? resolution.height : window.getHeight();
-			if(width <= 0 || height <= 0) {
-				return;
-			}
-
-			final int guiWidth = FullscreenFix.toGuiScaledSize((double) width / guiScale);
-			final int guiHeight = FullscreenFix.toGuiScaledSize((double) height / guiScale);
+			final int guiWidth = guiSize(FullscreenFix.getGuiExtentWidth(resolution, viewportWidth, viewportHeight, guiScale));
+			final int guiHeight = guiSize(FullscreenFix.getGuiExtentHeight(resolution, viewportWidth, viewportHeight, guiScale));
 
 			str.append(" -> ").append(guiWidth).append('x').append(guiHeight);
 
-			if(guiWidth == window.getGuiScaledWidth() && guiHeight == window.getGuiScaledHeight()) {
+			final RenderResolution active = FullscreenFix.GUI_RESOLUTION.get();
+			final int currentWidth = guiSize(FullscreenFix.getGuiExtentWidth(active, viewportWidth, viewportHeight, guiScale));
+			final int currentHeight = guiSize(FullscreenFix.getGuiExtentHeight(active, viewportWidth, viewportHeight, guiScale));
+
+			if(guiWidth == currentWidth && guiHeight == currentHeight) {
 				str.append(' ').append(FullscreenFix.TRANS.asString("value.renderResolution.current"));
 			}
+		}
+
+		private static int guiSize(double extent) {
+			return FullscreenFix.toGuiScaledSize(extent);
 		}
 
 		@Override

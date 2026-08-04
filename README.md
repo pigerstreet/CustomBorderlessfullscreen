@@ -24,7 +24,13 @@ If the hud from another mod sits in the wrong place because it was positioned at
 
 Use the **Render Resolution** instead when the point is to actually render fewer pixels, for performance.
 
-A gui resolution whose shape differs from the window is stretched to fit it, because that is what keeps hud positions exact. **GUI Keep Aspect Ratio** scales it evenly instead, which distorts nothing but means positions along the wider axis no longer match.
+### Stretching, and why the gui can end up looking wrong
+
+A gui resolution whose shape differs from the window is stretched to fit it, because that is what keeps every hud position exact as a fraction of the screen. The cost is that the gui is then genuinely distorted, and by the difference between the two aspect ratios: laying out a 1720x1080 gui on a 2368x1320 window makes a gui unit 4.13 pixels wide and 3.67 pixels tall, so everything is drawn 13% wider than it is tall. Inventory slots stop being square, and item icons and text are stretched with them. Nothing is misaligned — the whole gui, the hud and anything another mod draws are all in the same stretched space — but it does not look right, and on a big enough difference it looks obviously wrong.
+
+**GUI Keep Aspect Ratio** scales both axes by the same amount instead, so nothing is distorted. The coordinate space then covers the whole window rather than matching the gui resolution exactly: 1720x1080 on that window gives 646x360 instead of 574x360. Vertical positions and anything measured from the left or the top edge stay exactly where the hud put them, which is usually all that is wanted; only positions measured as a fraction of the width move, and they move to where they belong on a wider screen.
+
+Turn it on unless a hud specifically needs fractional positions to match. If the gui resolution and the monitor have the same aspect ratio the option makes no difference at all.
 
 **GUI Resolution: HUD Only** applies the gui resolution only while no screen is open. Menus have no misplaced hud to fix, and stretching them to a different shape is pure downside, so with this on they are laid out and drawn exactly as they are without the mod. The cost is that the hud goes back to its normal size for as long as any screen is open, chat included, because the hud and the screen on top of it share one projection per frame.
 

@@ -1,12 +1,12 @@
 package b100.fullscreenfix.mixin;
 
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import b100.fullscreenfix.FullscreenFix;
@@ -149,34 +149,76 @@ public class GuiRendererMixin {
 	}
 
 	/**
-	 * Item icons are rendered into an atlas at a size taken from the gui scale, then drawn into the
-	 * gui at whatever size the coordinate space asks for. With a gui resolution smaller than the
-	 * window a gui unit covers more pixels than the gui scale suggests, so the atlas has to be
-	 * rendered larger or the icons are the one part of the gui that gets upscaled.
+	 * Item icons and the picture in picture elements are not drawn as geometry. Each is rendered into
+	 * a texture whose size comes from the gui scale and is then drawn into the gui at whatever size
+	 * the coordinate space asks for. With a gui resolution a gui unit covers more pixels than the gui
+	 * scale suggests, so those textures have to be rendered larger or they are the one part of an
+	 * otherwise sharp gui that gets upscaled.
 	 *
-	 * This is the read the surrounding method compares against its cached value to decide whether to
-	 * throw the atlas away, so changing it here also rebuilds the atlas when the option changes.
+	 * Rather than replace each individual read, the scale on the window state is swapped for the
+	 * duration of the two preparation passes. Everything reached from them agrees on one number that
+	 * way, including code that is not vanilla's: a picture in picture renderer added by another mod
+	 * reads the same field vanilla's own does, and giving it a texture rendered at one scale while it
+	 * reads another is exactly how a picture in picture element ends up the wrong size.
+	 *
+	 * Only the preparation passes are wrapped. The projection and the scissor rectangles are worked
+	 * out later in the frame and need the real scale, and are handled above.
 	 */
-	@ModifyExpressionValue(method = "getGuiScaleInvalidatingItemAtlasIfChanged", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/client/renderer/state/WindowRenderState;guiScale:I"))
-	private int guiResolutionItemAtlasScale(int guiScale) {
-		return effectiveGuiScale(guiScale);
+	@Inject(method = "prepareItemElements", at = @At("HEAD"))
+	private void useEffectiveGuiScaleForItems(CallbackInfo ci) {
+		pushEffectiveGuiScale();
+	}
+
+	@Inject(method = "prepareItemElements", at = @At("RETURN"))
+	private void restoreGuiScaleAfterItems(CallbackInfo ci) {
+		popEffectiveGuiScale();
+	}
+
+	@Inject(method = "preparePictureInPicture", at = @At("HEAD"))
+	private void useEffectiveGuiScaleForPictureInPicture(CallbackInfo ci) {
+		pushEffectiveGuiScale();
+	}
+
+	@Inject(method = "preparePictureInPicture", at = @At("RETURN"))
+	private void restoreGuiScaleAfterPictureInPicture(CallbackInfo ci) {
+		popEffectiveGuiScale();
+	}
+
+	private int swappedGuiScale = 0;
+
+	private void pushEffectiveGuiScale() {
+		if(FullscreenFix.getActiveGuiResolution() == null) {
+			return;
+		}
+
+		final WindowRenderState window = getWindowRenderState();
+		if(window == null || window.guiScale <= 0 || window.width <= 0 || window.height <= 0) {
+			return;
+		}
+
+		final int effective = FullscreenFix.getEffectiveGuiScale(window.width, window.height, window.guiScale);
+		if(effective == window.guiScale) {
+			return;
+		}
+
+		swappedGuiScale = window.guiScale;
+		window.guiScale = effective;
 	}
 
 	/**
-	 * The same for the picture in picture elements, which each render into their own texture sized
-	 * from the gui scale. The player model in the inventory and the map are drawn this way.
+	 * A renderer that throws would leave the swap in place, so nothing here depends on being reached.
+	 * The field is written from the window at the start of every frame, which puts it back by itself.
 	 */
-	@ModifyExpressionValue(method = "preparePictureInPicture", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/client/renderer/state/WindowRenderState;guiScale:I"))
-	private int guiResolutionPictureInPictureScale(int guiScale) {
-		return effectiveGuiScale(guiScale);
-	}
-
-	private static int effectiveGuiScale(int guiScale) {
-		final WindowRenderState window = getWindowRenderState();
-		if(window == null || window.width <= 0 || window.height <= 0) {
-			return guiScale;
+	private void popEffectiveGuiScale() {
+		if(swappedGuiScale == 0) {
+			return;
 		}
-		return FullscreenFix.getEffectiveGuiScale(window.width, window.height, guiScale);
+
+		final WindowRenderState window = getWindowRenderState();
+		if(window != null) {
+			window.guiScale = swappedGuiScale;
+		}
+		swappedGuiScale = 0;
 	}
 
 	private static WindowRenderState getWindowRenderState() {

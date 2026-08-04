@@ -356,7 +356,18 @@ public class FullscreenFix {
 	 * coordinate space in one axis, so positions along that axis drift.
 	 */
 	public static double getGuiExtentWidth(int viewportWidth, int viewportHeight, int guiScale) {
-		RenderResolution resolution = getActiveGuiResolution();
+		return getGuiExtentWidth(getActiveGuiResolution(), viewportWidth, viewportHeight, guiScale);
+	}
+
+	public static double getGuiExtentHeight(int viewportWidth, int viewportHeight, int guiScale) {
+		return getGuiExtentHeight(getActiveGuiResolution(), viewportWidth, viewportHeight, guiScale);
+	}
+
+	/**
+	 * The same for a gui resolution that is not the active one, so that the resolution picker can show
+	 * what each entry it offers would produce rather than only what is in use.
+	 */
+	public static double getGuiExtentWidth(RenderResolution resolution, int viewportWidth, int viewportHeight, int guiScale) {
 		if(resolution == null || guiScale <= 0) {
 			return (double) viewportWidth / Math.max(1, guiScale);
 		}
@@ -366,8 +377,7 @@ public class FullscreenFix {
 		return viewportWidth / getGuiUniformScale(resolution, viewportWidth, viewportHeight, guiScale);
 	}
 
-	public static double getGuiExtentHeight(int viewportWidth, int viewportHeight, int guiScale) {
-		RenderResolution resolution = getActiveGuiResolution();
+	public static double getGuiExtentHeight(RenderResolution resolution, int viewportWidth, int viewportHeight, int guiScale) {
 		if(resolution == null || guiScale <= 0) {
 			return (double) viewportHeight / Math.max(1, guiScale);
 		}

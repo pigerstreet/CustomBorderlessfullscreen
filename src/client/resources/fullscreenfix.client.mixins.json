@@ -7,7 +7,6 @@
 		"access.WindowAccess",
 		"GlCommandEncoderMixin",
 		"GuiRendererMixin",
-		"GuiSkinRendererMixin",
 		"InputUtilMixin",
 		"KeyboardMixin",
 		"MouseHandlerMixin",
