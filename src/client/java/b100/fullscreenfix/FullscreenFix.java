@@ -512,6 +512,37 @@ public class FullscreenFix {
 	}
 
 	/**
+	 * How many real pixels one gui unit covers, per axis.
+	 *
+	 * A gui resolution of a different shape than the window makes these two different numbers, which
+	 * is the whole difficulty with anything that renders into its own texture: the size of such a
+	 * texture is a single gui scale times a size in gui units, and no single number is both of these.
+	 */
+	public static double getPixelsPerGuiUnitX() {
+		if(window == null) {
+			return 0.0;
+		}
+		final int guiScale = window.getGuiScale();
+		if(guiScale <= 0 || window.getWidth() <= 0) {
+			return 0.0;
+		}
+		final double extent = getGuiExtentWidth(window.getWidth(), window.getHeight(), guiScale);
+		return extent <= 0.0 ? 0.0 : window.getWidth() / extent;
+	}
+
+	public static double getPixelsPerGuiUnitY() {
+		if(window == null) {
+			return 0.0;
+		}
+		final int guiScale = window.getGuiScale();
+		if(guiScale <= 0 || window.getHeight() <= 0) {
+			return 0.0;
+		}
+		final double extent = getGuiExtentHeight(window.getWidth(), window.getHeight(), guiScale);
+		return extent <= 0.0 ? 0.0 : window.getHeight() / extent;
+	}
+
+	/**
 	 * The gui scale the window really has, for undoing the enlarged one where it is not wanted.
 	 *
 	 * The enlarged scale is put on the window state for the length of the passes that build the
