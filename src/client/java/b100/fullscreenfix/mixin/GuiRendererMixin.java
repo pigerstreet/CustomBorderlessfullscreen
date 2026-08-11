@@ -1,12 +1,12 @@
 package b100.fullscreenfix.mixin;
 
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 
 import b100.fullscreenfix.FullscreenFix;
@@ -155,70 +155,34 @@ public class GuiRendererMixin {
 	 * scale suggests, so those textures have to be rendered larger or they are the one part of an
 	 * otherwise sharp gui that gets upscaled.
 	 *
-	 * Rather than replace each individual read, the scale on the window state is swapped for the
-	 * duration of the two preparation passes. Everything reached from them agrees on one number that
-	 * way, including code that is not vanilla's: a picture in picture renderer added by another mod
-	 * reads the same field vanilla's own does, and giving it a texture rendered at one scale while it
-	 * reads another is exactly how a picture in picture element ends up the wrong size.
+	 * Only the value each read produces is replaced, and nothing is written back to the window state.
 	 *
-	 * Only the preparation passes are wrapped. The projection and the scissor rectangles are worked
-	 * out later in the frame and need the real scale, and are handled above.
+	 * Putting the enlarged scale on that state for the length of the two preparation passes, which is
+	 * what this did, is a trap: the projection the whole gui is drawn with is built later in the same
+	 * frame from that same field. Anything that stops one of those passes reaching its end, and a
+	 * mixin from another mod cancelling it will, leaves the enlarged scale in place and the entire gui
+	 * is then drawn 1.5 times too large for as long as that keeps happening.
+	 *
+	 * A value on the stack cannot be left behind that way, so there is nothing to restore and nothing
+	 * to get it wrong. Picture in picture renderers belonging to other mods are handled separately in
+	 * {@link PictureInPictureRendererMixin}, which is what the swap had been reaching for.
 	 */
-	@Inject(method = "prepareItemElements", at = @At("HEAD"))
-	private void useEffectiveGuiScaleForItems(CallbackInfo ci) {
-		pushEffectiveGuiScale();
+	@ModifyExpressionValue(method = "getGuiScaleInvalidatingItemAtlasIfChanged", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/client/renderer/state/WindowRenderState;guiScale:I"))
+	private int guiResolutionItemAtlasScale(int guiScale) {
+		return effectiveGuiScale(guiScale);
 	}
 
-	@Inject(method = "prepareItemElements", at = @At("RETURN"))
-	private void restoreGuiScaleAfterItems(CallbackInfo ci) {
-		popEffectiveGuiScale();
+	@ModifyExpressionValue(method = "preparePictureInPicture", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/client/renderer/state/WindowRenderState;guiScale:I"))
+	private int guiResolutionPictureInPictureScale(int guiScale) {
+		return effectiveGuiScale(guiScale);
 	}
 
-	@Inject(method = "preparePictureInPicture", at = @At("HEAD"))
-	private void useEffectiveGuiScaleForPictureInPicture(CallbackInfo ci) {
-		pushEffectiveGuiScale();
-	}
-
-	@Inject(method = "preparePictureInPicture", at = @At("RETURN"))
-	private void restoreGuiScaleAfterPictureInPicture(CallbackInfo ci) {
-		popEffectiveGuiScale();
-	}
-
-	private int swappedGuiScale = 0;
-
-	private void pushEffectiveGuiScale() {
-		if(FullscreenFix.getActiveGuiResolution() == null) {
-			return;
-		}
-
+	private static int effectiveGuiScale(int guiScale) {
 		final WindowRenderState window = getWindowRenderState();
-		if(window == null || window.guiScale <= 0 || window.width <= 0 || window.height <= 0) {
-			return;
+		if(window == null || window.width <= 0 || window.height <= 0) {
+			return guiScale;
 		}
-
-		final int effective = FullscreenFix.getEffectiveGuiScale(window.width, window.height, window.guiScale);
-		if(effective == window.guiScale) {
-			return;
-		}
-
-		swappedGuiScale = window.guiScale;
-		window.guiScale = effective;
-	}
-
-	/**
-	 * A renderer that throws would leave the swap in place, so nothing here depends on being reached.
-	 * The field is written from the window at the start of every frame, which puts it back by itself.
-	 */
-	private void popEffectiveGuiScale() {
-		if(swappedGuiScale == 0) {
-			return;
-		}
-
-		final WindowRenderState window = getWindowRenderState();
-		if(window != null) {
-			window.guiScale = swappedGuiScale;
-		}
-		swappedGuiScale = 0;
+		return FullscreenFix.getEffectiveGuiScale(window.width, window.height, guiScale);
 	}
 
 	private static WindowRenderState getWindowRenderState() {
