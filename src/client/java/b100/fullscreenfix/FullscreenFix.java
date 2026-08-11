@@ -512,6 +512,17 @@ public class FullscreenFix {
 	}
 
 	/**
+	 * The gui scale the window really has, for undoing the enlarged one where it is not wanted.
+	 *
+	 * The enlarged scale is put on the window state for the length of the passes that build the
+	 * textures item icons and picture in picture elements are drawn from, so that everything reached
+	 * from them agrees on one number. Anything that has to opt back out asks for this.
+	 */
+	public static int getRealGuiScale(int fallback) {
+		return window == null ? fallback : window.getGuiScale();
+	}
+
+	/**
 	 * The size of the gui coordinate space in whole gui units, matching how vanilla rounds it.
 	 */
 	public static int toGuiScaledSize(double extent) {

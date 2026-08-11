@@ -10,6 +10,7 @@
 		"InputUtilMixin",
 		"KeyboardMixin",
 		"MouseHandlerMixin",
+		"PictureInPictureRendererMixin",
 		"VideoOptionsScreenMixin",
 		"WindowMixin"
 	],

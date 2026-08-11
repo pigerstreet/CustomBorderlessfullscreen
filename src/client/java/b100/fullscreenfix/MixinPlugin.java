@@ -22,6 +22,7 @@ public class MixinPlugin implements IMixinConfigPlugin {
 		mixinsThatRequireModEnabled.add("GlCommandEncoderMixin");
 		mixinsThatRequireModEnabled.add("MouseHandlerMixin");
 		mixinsThatRequireModEnabled.add("GuiRendererMixin");
+		mixinsThatRequireModEnabled.add("PictureInPictureRendererMixin");
 
 		sodiumMixins.add("sodium.SodiumConfigBuilderMixin");
 	}
