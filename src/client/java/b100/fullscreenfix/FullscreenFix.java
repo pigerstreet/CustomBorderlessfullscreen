@@ -26,6 +26,7 @@ import net.minecraft.client.OptionInstance.TooltipSupplier;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
@@ -435,7 +436,12 @@ public class FullscreenFix {
 			return false;
 		}
 		final Minecraft minecraft = Minecraft.getInstance();
-		return minecraft != null && minecraft.screen != null;
+		if(minecraft == null || minecraft.screen == null) {
+			return false;
+		}
+		// Chat is open for much of the time and is mostly hud, so treating it as a screen would undo
+		// the option for anyone who leaves it open, which is the opposite of what it is for
+		return !(minecraft.screen instanceof ChatScreen);
 	}
 
 	/**
