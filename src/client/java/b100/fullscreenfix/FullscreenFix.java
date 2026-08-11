@@ -137,6 +137,20 @@ public class FullscreenFix {
 		};
 	};
 
+	/**
+	 * Whether cursor positions are reported in the coordinate space of the gui resolution.
+	 *
+	 * Off by default, because there is no answer to this that suits everything. Hud code that keeps
+	 * its positions in screen coordinates and takes them from the cursor needs this on, or an element
+	 * being dragged runs away from the pointer. Code that draws outside the gui projection entirely,
+	 * such as anything rendering with NanoVG, works in real pixels and needs it off, and gets it
+	 * wrong by the same factor in the other direction when it is on.
+	 *
+	 * Turning it on only while arranging a hud, and off again afterwards, suits both: the positions
+	 * that get stored are in the space the hud is drawn in either way.
+	 */
+	public static final BooleanProperty GUI_CURSOR_SPACE = new BooleanPropertyImpl(false);
+
 	private static void guiResolutionChanged() {
 		guiResolutionNeedsUpdate = true;
 		guiResolutionGeneration++;
@@ -161,6 +175,7 @@ public class FullscreenFix {
 		CONFIG.add("guiResolution", GUI_RESOLUTION);
 		CONFIG.add("guiResolutionKeepAspectRatio", GUI_KEEP_ASPECT_RATIO);
 		CONFIG.add("guiResolutionHudOnly", GUI_HUD_ONLY);
+		CONFIG.add("guiResolutionCursorSpace", GUI_CURSOR_SPACE);
 		CONFIG.add("logCoordinates", LOG_COORDINATES);
 		CONFIG.load();
 	}
@@ -357,7 +372,7 @@ public class FullscreenFix {
 	 * that needs it, notably for working out which monitor it is on and for centring the cursor.
 	 */
 	public static int getCursorSpaceWidth(int screenWidth) {
-		if(getActiveGuiResolution() == null || window == null) {
+		if(!GUI_CURSOR_SPACE.getBoolean() || getActiveGuiResolution() == null || window == null) {
 			return screenWidth;
 		}
 		final int guiScale = window.getGuiScale();
@@ -369,7 +384,7 @@ public class FullscreenFix {
 	}
 
 	public static int getCursorSpaceHeight(int screenHeight) {
-		if(getActiveGuiResolution() == null || window == null) {
+		if(!GUI_CURSOR_SPACE.getBoolean() || getActiveGuiResolution() == null || window == null) {
 			return screenHeight;
 		}
 		final int guiScale = window.getGuiScale();
