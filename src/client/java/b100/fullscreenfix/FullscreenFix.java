@@ -282,10 +282,18 @@ public class FullscreenFix {
 	}
 
 	/**
-	 * Factor to convert a cursor position from the real window into the coordinate space the game
-	 * believes the window has. 1 when no custom render resolution is active.
+	 * Factor to convert a cursor position from the real window into the coordinate space cursor
+	 * positions are reported in. 1 when neither custom resolution is active.
 	 */
 	public static double getCursorScaleX() {
+		return getRenderCursorScaleX() * getGuiCursorScaleX();
+	}
+
+	public static double getCursorScaleY() {
+		return getRenderCursorScaleY() * getGuiCursorScaleY();
+	}
+
+	private static double getRenderCursorScaleX() {
 		RenderResolution resolution = getActiveRenderResolution();
 		if(resolution == null || realScreenWidth <= 0) {
 			return 1.0;
@@ -297,7 +305,7 @@ public class FullscreenFix {
 		return resolution.width / presentedWidth;
 	}
 
-	public static double getCursorScaleY() {
+	private static double getRenderCursorScaleY() {
 		RenderResolution resolution = getActiveRenderResolution();
 		if(resolution == null || realScreenHeight <= 0) {
 			return 1.0;
@@ -307,6 +315,69 @@ public class FullscreenFix {
 			return 1.0;
 		}
 		return resolution.height / presentedHeight;
+	}
+
+	private static double getGuiCursorScaleX() {
+		if(window == null) {
+			return 1.0;
+		}
+		final int screenWidth = window.getScreenWidth();
+		if(screenWidth <= 0) {
+			return 1.0;
+		}
+		return (double) getCursorSpaceWidth(screenWidth) / screenWidth;
+	}
+
+	private static double getGuiCursorScaleY() {
+		if(window == null) {
+			return 1.0;
+		}
+		final int screenHeight = window.getScreenHeight();
+		if(screenHeight <= 0) {
+			return 1.0;
+		}
+		return (double) getCursorSpaceHeight(screenHeight) / screenHeight;
+	}
+
+	/**
+	 * The size of the window as far as anything working in screen coordinates is concerned.
+	 *
+	 * Vanilla holds an invariant that a gui unit is exactly the gui scale in screen coordinates, so
+	 * that screenCoordinate = guiUnit * guiScale. Plenty of hud code relies on it: it keeps its
+	 * positions in screen coordinates and draws them by scaling the whole gui down by the gui scale,
+	 * which only lands where it means to while that identity holds. A gui resolution breaks it,
+	 * because it changes the number of units the window is wide without changing the gui scale.
+	 *
+	 * Reporting cursor positions in a window of this size restores it. The cursor is where such code
+	 * gets its positions from, so putting the cursor in the coordinate space that satisfies the
+	 * identity puts everything derived from it there as well, and a hud placed under the cursor is
+	 * drawn under the cursor again.
+	 *
+	 * Nothing about the real window changes. The window is still asked for its true size by the code
+	 * that needs it, notably for working out which monitor it is on and for centring the cursor.
+	 */
+	public static int getCursorSpaceWidth(int screenWidth) {
+		if(getActiveGuiResolution() == null || window == null) {
+			return screenWidth;
+		}
+		final int guiScale = window.getGuiScale();
+		if(guiScale <= 0) {
+			return screenWidth;
+		}
+		final double virtualWidth = getGuiExtentWidth(window.getWidth(), window.getHeight(), guiScale) * guiScale;
+		return virtualWidth <= 0.0 ? screenWidth : Math.max(1, (int) Math.round(virtualWidth));
+	}
+
+	public static int getCursorSpaceHeight(int screenHeight) {
+		if(getActiveGuiResolution() == null || window == null) {
+			return screenHeight;
+		}
+		final int guiScale = window.getGuiScale();
+		if(guiScale <= 0) {
+			return screenHeight;
+		}
+		final double virtualHeight = getGuiExtentHeight(window.getWidth(), window.getHeight(), guiScale) * guiScale;
+		return virtualHeight <= 0.0 ? screenHeight : Math.max(1, (int) Math.round(virtualHeight));
 	}
 	
 	/**

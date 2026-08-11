@@ -209,14 +209,20 @@ public abstract class WindowMixin {
 			return;
 		}
 
-		final double cursorX = (double) width / effectiveWidth;
-		final double cursorY = (double) height / effectiveHeight;
+		// Cursor positions are measured against the space they are reported in, not the real window
+		final int cursorSpaceWidth = FullscreenFix.getCursorSpaceWidth(width);
+		final int cursorSpaceHeight = FullscreenFix.getCursorSpaceHeight(height);
+
+		final double cursorX = (double) cursorSpaceWidth / effectiveWidth;
+		final double cursorY = (double) cursorSpaceHeight / effectiveHeight;
 		final double drawnX = framebufferWidth / extentWidth;
 		final double drawnY = framebufferHeight / extentHeight;
 
 		FullscreenFix.printCoordinates("Pixels per gui unit: cursor uses " + cursorX + " x " + cursorY
+				+ " in a cursor space of " + cursorSpaceWidth + "x" + cursorSpaceHeight
 				+ ", drawing uses " + drawnX + " x " + drawnY
-				+ " (off by " + (drawnX / cursorX) + " x " + (drawnY / cursorY) + ", 1.0 is correct)");
+				+ " (cursor is in gui units, drawing in pixels, so these agree when the ratio of each"
+				+ " pair matches; hud code that keeps screen coordinates needs the cursor space)");
 	}
 
 	/**

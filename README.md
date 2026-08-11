@@ -112,7 +112,21 @@ GuiRenderer.draw()        setupOrtho(..., framebufferWidth / guiScale, ...)     
 
 The projection extent is a float and covers the whole window whatever its value, so replacing the numerator in both places with the gui resolution moves the entire gui into the coordinate space of a differently sized window without changing a single thing about how the world is rendered. `WindowMixin` handles the first, `GuiRendererMixin` the second, and both read the extent from one place in `FullscreenFix` so they cannot disagree — if they did, everything would be offset by the difference.
 
-Nothing has to be done about the mouse. Cursor positions are mapped with `xpos * guiScaledWidth / getScreenWidth()`, and since the gui still covers the whole window that ratio is already correct.
+### Hud code that keeps its positions in screen coordinates
+
+Vanilla holds an invariant that one gui unit is exactly the gui scale in screen coordinates:
+
+```
+screenCoordinate = guiUnit * guiScale        because guiScaledWidth * guiScale == screenWidth
+```
+
+A lot of hud code depends on it without ever saying so. It keeps its positions in screen coordinates, takes them from the cursor when the user drags something, and draws them by scaling the whole gui down by the gui scale and then drawing at the stored number. That only lands where it means to while the identity holds, and a gui resolution breaks it: it changes how many units wide the window is without changing the gui scale. On a 2560x1440 window with a gui resolution of 1720x1080 at gui scale 2, the gui is 860 units wide, so `860 * 2` is 1720 rather than 2560, and everything positioned that way is drawn about 49% too far right and 33% too far down. Dragging is worse than wrong, it is unusable: the element runs away from the cursor.
+
+Cursor positions are therefore reported in a window of the size that satisfies the identity, `guiExtent * guiScale`, which for the numbers above is exactly the 1720x1080 the gui resolution asked for. The cursor is where that code gets its positions from, so putting the cursor in the coordinate space where the assumption is true puts everything derived from it there too.
+
+This costs vanilla nothing. Vanilla turns a cursor position into a gui coordinate with `xpos * guiScaledWidth / getScreenWidth()`, and the window it measures against is replaced by the same virtual one, so the scaling on the way in and the division cancel exactly and the gui coordinate is the number vanilla would have produced by itself. Only the space the position passes through changes. The real size of the window is still reported everywhere it is actually wanted, which is for working out which monitor the window is on and for putting the cursor in the middle of it.
+
+Hud code that works in gui units rather than screen coordinates, which includes all of vanilla's own, never sees any of this.
 
 Item icons and the picture in picture elements are the exception to "nothing is upscaled": they are rendered into their own textures at a size taken from the gui scale, so they follow the effective scale instead, otherwise they would be the one blurry part of a sharp gui.
 

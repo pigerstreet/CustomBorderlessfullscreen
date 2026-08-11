@@ -30,6 +30,32 @@ public class MouseHandlerMixin {
 	}
 
 	/**
+	 * Cursor positions are turned into gui coordinates by scaling them by the gui size over the size
+	 * of the window in screen coordinates. Since they are now reported in the coordinate space of the
+	 * gui resolution rather than that of the real window, the window they are measured against has to
+	 * be the same one, or the two disagree and everything vanilla draws is offset from where it is
+	 * clicked.
+	 *
+	 * The scaling the cursor already went through and this division cancel out exactly, so the gui
+	 * coordinate this produces is the same number vanilla would have produced on its own. All that
+	 * changes is the space the position passed through on the way, which is the space hud code that
+	 * reads the cursor directly gets to see.
+	 *
+	 * Only the reads in these two methods are replaced. The window is asked for its size elsewhere to
+	 * decide which monitor it is on and to put the cursor in the middle of it, and both of those want
+	 * the real one.
+	 */
+	@ModifyExpressionValue(method = "getScaledXPos", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/Window;getScreenWidth()I"))
+	private static int guiResolutionCursorSpaceWidth(int screenWidth) {
+		return FullscreenFix.getCursorSpaceWidth(screenWidth);
+	}
+
+	@ModifyExpressionValue(method = "getScaledYPos", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/Window;getScreenHeight()I"))
+	private static int guiResolutionCursorSpaceHeight(int screenHeight) {
+		return FullscreenFix.getCursorSpaceHeight(screenHeight);
+	}
+
+	/**
 	 * Looking around uses the accumulated cursor movement directly rather than as a position, so
 	 * scaling it would quietly change the mouse sensitivity. Scaling it back undoes that, which
 	 * keeps looking around feeling exactly the same as it does without a render resolution.
