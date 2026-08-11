@@ -74,6 +74,7 @@ public class ConfigScreen extends GuiScrollListScreen {
 			scrollList.add(BooleanToggleElement.create(this, "option.guiResolutionKeepAspectRatio", FullscreenFix.GUI_KEEP_ASPECT_RATIO, UpdateMode.ON_SAVE));
 			scrollList.add(BooleanToggleElement.create(this, "option.guiResolutionHudOnly", FullscreenFix.GUI_HUD_ONLY, UpdateMode.ON_SAVE));
 			scrollList.add(BooleanToggleElement.create(this, "option.guiResolutionCursorSpace", FullscreenFix.GUI_CURSOR_SPACE, UpdateMode.ON_SAVE));
+			scrollList.add(BooleanToggleElement.create(this, "option.guiResolutionNormalCrosshair", FullscreenFix.NORMAL_CROSSHAIR, UpdateMode.ON_SAVE));
 
 			scrollList.add(BooleanToggleElement.create(this, "option.replaceVideoSettings", FullscreenFix.REPLACE_VIDEO_SETTINGS_BUTTON, UpdateMode.ON_SAVE));
 			scrollList.add(BooleanToggleElement.create(this, "option.configScreenHotkeyEnabled", FullscreenFix.CONFIG_SCREEN_HOTKEY_ENABLED, UpdateMode.ON_SAVE));

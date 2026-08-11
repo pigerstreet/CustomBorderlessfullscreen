@@ -151,6 +151,15 @@ public class FullscreenFix {
 	 */
 	public static final BooleanProperty GUI_CURSOR_SPACE = new BooleanPropertyImpl(false);
 
+	/**
+	 * Whether the crosshair is drawn at the shape it has without a gui resolution.
+	 *
+	 * Stretching is meant to be visible on everything that is laid out in gui units, since that is
+	 * what puts a hud back where it belongs, but the crosshair is a square in the middle of the
+	 * screen and there is nothing to be gained by stretching it.
+	 */
+	public static final BooleanProperty NORMAL_CROSSHAIR = new BooleanPropertyImpl(true);
+
 	private static void guiResolutionChanged() {
 		guiResolutionNeedsUpdate = true;
 		guiResolutionGeneration++;
@@ -176,6 +185,7 @@ public class FullscreenFix {
 		CONFIG.add("guiResolutionKeepAspectRatio", GUI_KEEP_ASPECT_RATIO);
 		CONFIG.add("guiResolutionHudOnly", GUI_HUD_ONLY);
 		CONFIG.add("guiResolutionCursorSpace", GUI_CURSOR_SPACE);
+		CONFIG.add("guiResolutionNormalCrosshair", NORMAL_CROSSHAIR);
 		CONFIG.add("logCoordinates", LOG_COORDINATES);
 		CONFIG.load();
 	}
