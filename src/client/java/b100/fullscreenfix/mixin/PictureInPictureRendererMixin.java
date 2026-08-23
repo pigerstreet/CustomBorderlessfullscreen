@@ -2,7 +2,9 @@ package b100.fullscreenfix.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import b100.fullscreenfix.FullscreenFix;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
@@ -10,23 +12,29 @@ import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;
 
 /**
- * Sizes a picture in picture texture belonging to another mod to the pixels it will actually cover.
+ * Draws a picture in picture element belonging to another mod at the size it will really be shown at.
  *
  * These elements are rendered into a texture and then stretched over the rectangle they occupy, and
- * vanilla sizes that texture as the size of the rectangle in gui units times the gui scale. That is
- * exactly the pixels it covers only while a gui unit really is the gui scale across, which is what a
- * gui resolution stops being true, and by a different amount on each axis when the resolution is not
- * the shape of the window.
+ * vanilla sizes that texture as the size of the rectangle in gui units times the gui scale, then draws
+ * into it through a pose scaled by that same number. That is the pixels it covers only while a gui unit
+ * really is the gui scale across, which is what a gui resolution stops being true, and by a different
+ * amount on each axis when the resolution is not the shape of the window.
  *
- * No single gui scale can express both amounts, so the texture is sized per axis here instead. On a
- * 2560x1440 window laid out as 1720x1080 a gui unit is 2.98 pixels across and 2.67 down; sizing by a
- * scale of 3 gives a texture 1620 tall stretched onto 1440, and content drawn into it lands 11% above
- * where the mod that drew it thinks it did. Since it hit tests against its own idea of where that is,
- * everything it draws responds slightly above the pointer, which is what Odin's click gui does.
+ * No single gui scale can express both amounts, so the texture is measured per axis here, and the pose
+ * drawn into it is scaled per axis to match. On a 2560x1440 window laid out as 1720x1080 a gui unit is
+ * 2.98 pixels across and 2.67 down, where a scale of 3 would make a texture 1620 tall to be stretched
+ * onto 1440.
  *
- * This is only for renderers that did not come with the game. Vanilla's draw through a pose scaled by
- * the gui scale it was given, one number for both axes, so their content would no longer fill a
- * texture measured per axis. They keep the enlarged scale, which for them agrees with itself.
+ * The two have to move together. Sizing the texture alone leaves anything that does use the pose drawing
+ * its content 11% too far down inside a texture that is then squashed back, so the whole element ends up
+ * short of where the mod that drew it thinks it is; that is what NoammAddons' storage overlay does, since
+ * it batches every item into one element covering the whole screen. Scaling the pose alone would leave the
+ * same gap the other way round. Doing both means a renderer that draws through the pose in gui units and
+ * one that ignores the pose and draws in real pixels, which is what Odin's NanoVG menus do, both land
+ * exactly where they mean to.
+ *
+ * This is only for renderers that did not come with the game. Vanilla's are consistent with themselves at
+ * whatever single scale they are given, so they keep the enlarged one and are left alone.
  */
 @Mixin(value = PictureInPictureRenderer.class)
 public class PictureInPictureRendererMixin {
@@ -47,6 +55,32 @@ public class PictureInPictureRendererMixin {
 		return toPixels(state.y1() - state.y0(), FullscreenFix.getPixelsPerGuiUnitY(), textureHeight);
 	}
 
+	/**
+	 * Vanilla scales the pose by the gui scale on both axes, which is the number of pixels it believes a
+	 * gui unit covers. Replacing it with the number of pixels a gui unit really covers, one per axis, is
+	 * the same statement made accurately.
+	 *
+	 * The depth follows the vertical rather than the horizontal so that a model drawn into one of these
+	 * gains no depth over what vanilla would have given it, since the projection is unchanged and extra
+	 * depth is the one thing here that could clip.
+	 */
+	@ModifyArgs(method = "prepare", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;scale(FFF)V"))
+	private void guiResolutionPoseScale(Args args, PictureInPictureRenderState state, GuiRenderState guiRenderState, int guiScale) {
+		if(!sizesItsOwnContent()) {
+			return;
+		}
+
+		final double scaleX = FullscreenFix.getPixelsPerGuiUnitX() * state.scale();
+		final double scaleY = FullscreenFix.getPixelsPerGuiUnitY() * state.scale();
+		if(scaleX <= 0.0 || scaleY <= 0.0) {
+			return;
+		}
+
+		args.set(0, (float) scaleX);
+		args.set(1, (float) scaleY);
+		args.set(2, (float) -scaleY);
+	}
+
 	private static int toPixels(int guiUnits, double pixelsPerUnit, int fallback) {
 		if(guiUnits <= 0 || pixelsPerUnit <= 0.0) {
 			return fallback;
@@ -55,9 +89,8 @@ public class PictureInPictureRendererMixin {
 	}
 
 	/**
-	 * Whether this renderer draws its content at a size of its own choosing rather than through the
-	 * pose it is handed. Everything that did not come with the game is treated as though it does,
-	 * because the texture then matches the screen exactly and that is what such a renderer assumes.
+	 * Whether this renderer is one the game did not come with, and so one whose idea of how big its own
+	 * content is has to be corrected rather than trusted.
 	 */
 	private boolean sizesItsOwnContent() {
 		if(FullscreenFix.getActiveGuiResolution() == null) {
