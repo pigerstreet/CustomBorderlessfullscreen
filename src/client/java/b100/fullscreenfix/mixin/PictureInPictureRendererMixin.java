@@ -6,7 +6,12 @@ import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.vertex.PoseStack;
+
 import b100.fullscreenfix.FullscreenFix;
+import b100.fullscreenfix.PictureInPictureScale;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;
@@ -81,6 +86,20 @@ public class PictureInPictureRendererMixin {
 		args.set(2, (float) -scaleY);
 	}
 
+	/**
+	 * Watches a renderer draw, so that one which measures its own content against the gui scale can be
+	 * recognised and then sized the way it expects. See {@link PictureInPictureScale}.
+	 */
+	@WrapOperation(method = "prepare", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/pip/PictureInPictureRenderer;renderToTexture(Lnet/minecraft/client/renderer/state/gui/pip/PictureInPictureRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;)V"))
+	private void guiResolutionWatchRenderToTexture(PictureInPictureRenderer<?> renderer, PictureInPictureRenderState state, PoseStack pose, Operation<Void> original) {
+		PictureInPictureScale.beginRenderToTexture(getClass());
+		try {
+			original.call(renderer, state, pose);
+		}finally {
+			PictureInPictureScale.endRenderToTexture();
+		}
+	}
+
 	private static int toPixels(int guiUnits, double pixelsPerUnit, int fallback) {
 		if(guiUnits <= 0 || pixelsPerUnit <= 0.0) {
 			return fallback;
@@ -94,6 +113,11 @@ public class PictureInPictureRendererMixin {
 	 */
 	private boolean sizesItsOwnContent() {
 		if(FullscreenFix.getActiveGuiResolution() == null) {
+			return false;
+		}
+		if(PictureInPictureScale.derivesSizeFromGuiScale(getClass())) {
+			// It measures itself against the gui scale, so it is consistent only with a texture measured
+			// the same way, which is what leaving it alone gives it
 			return false;
 		}
 		final String name = getClass().getName();

@@ -21,6 +21,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.Global;
 import b100.fullscreenfix.MonitorInfo;
+import b100.fullscreenfix.PictureInPictureScale;
 import b100.fullscreenfix.RenderResolution;
 import b100.fullscreenfix.VideoMode;
 import b100.fullscreenfix.util.GLFWUtil;
@@ -382,6 +383,30 @@ public abstract class WindowMixin {
 		}
 		refreshGuiSize();
 		return cachedGuiScaledHeight;
+	}
+
+	/**
+	 * Answers a picture in picture renderer that is measuring its own content with the scale its texture
+	 * was measured with, rather than the one the window is set to.
+	 *
+	 * Such a renderer multiplies its size in gui units by this to get pixels, which is right only while a
+	 * gui unit really is the gui scale across. Its texture is made by vanilla out of the scale this mod
+	 * hands the preparation pass, so that is the number it has to be told, or it draws its content over a
+	 * fraction of its own texture and the rest is left empty. That is SkyBlockPv's inventory panels, whose
+	 * backgrounds came out two thirds of the width they should be with the remainder black.
+	 *
+	 * Reading it here is also what identifies the renderer as one of that kind in the first place, so this
+	 * runs before the check on whether it needs correcting at all.
+	 */
+	@ModifyReturnValue(method = "getGuiScale", at = @At("RETURN"))
+	private int guiResolutionScaleForPictureInPicture(int original) {
+		if(!PictureInPictureScale.isRenderingToTexture()) {
+			return original;
+		}
+		if(FullscreenFix.getActiveGuiResolution() == null) {
+			return original;
+		}
+		return FullscreenFix.getEffectiveGuiScale(framebufferWidth, framebufferHeight, original);
 	}
 
 	/**
