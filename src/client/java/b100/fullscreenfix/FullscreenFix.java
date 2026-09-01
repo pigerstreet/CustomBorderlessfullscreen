@@ -517,6 +517,12 @@ public class FullscreenFix {
 			return guiScale;
 		}
 
+		if(viewportWidth == effectiveScaleForWidth && viewportHeight == effectiveScaleForHeight
+				&& guiScale == effectiveScaleForScale
+				&& guiResolutionGeneration == effectiveScaleForGeneration) {
+			return effectiveScale;
+		}
+
 		final double extentWidth = getGuiExtentWidth(viewportWidth, viewportHeight, guiScale);
 		final double extentHeight = getGuiExtentHeight(viewportWidth, viewportHeight, guiScale);
 		if(extentWidth <= 0.0 || extentHeight <= 0.0) {
@@ -524,8 +530,22 @@ public class FullscreenFix {
 		}
 
 		final double scale = Math.max(viewportWidth / extentWidth, viewportHeight / extentHeight);
-		return Mth.clamp((int) Math.ceil(scale), guiScale, MAX_EFFECTIVE_GUI_SCALE);
+		final int result = Mth.clamp((int) Math.ceil(scale), guiScale, MAX_EFFECTIVE_GUI_SCALE);
+
+		effectiveScaleForWidth = viewportWidth;
+		effectiveScaleForHeight = viewportHeight;
+		effectiveScaleForScale = guiScale;
+		effectiveScaleForGeneration = guiResolutionGeneration;
+		effectiveScale = result;
+
+		return result;
 	}
+
+	private static int effectiveScale = 0;
+	private static int effectiveScaleForWidth = -1;
+	private static int effectiveScaleForHeight = -1;
+	private static int effectiveScaleForScale = -1;
+	private static int effectiveScaleForGeneration = -1;
 
 	/**
 	 * How many real pixels one gui unit covers, per axis.
@@ -535,38 +555,79 @@ public class FullscreenFix {
 	 * texture is a single gui scale times a size in gui units, and no single number is both of these.
 	 */
 	public static double getPixelsPerGuiUnitX() {
-		if(window == null) {
-			return 0.0;
-		}
-		final int guiScale = window.getGuiScale();
-		if(guiScale <= 0 || window.getWidth() <= 0) {
-			return 0.0;
-		}
-		final double extent = getGuiExtentWidth(window.getWidth(), window.getHeight(), guiScale);
-		return extent <= 0.0 ? 0.0 : window.getWidth() / extent;
+		refreshPixelsPerGuiUnit();
+		return pixelsPerGuiUnitX;
 	}
 
 	public static double getPixelsPerGuiUnitY() {
+		refreshPixelsPerGuiUnit();
+		return pixelsPerGuiUnitY;
+	}
+
+	private static double pixelsPerGuiUnitX = 0.0;
+	private static double pixelsPerGuiUnitY = 0.0;
+	private static int pixelsPerGuiUnitForWidth = -1;
+	private static int pixelsPerGuiUnitForHeight = -1;
+	private static int pixelsPerGuiUnitForScale = -1;
+	private static int pixelsPerGuiUnitForGeneration = -1;
+	private static boolean pixelsPerGuiUnitSuspended = false;
+
+	/**
+	 * Works out the real size of a gui unit and keeps it until something it depends on changes.
+	 *
+	 * Every picture in picture element asks for both axes twice while it is being prepared, once to size
+	 * its texture and once to scale the pose drawn into it, so this used to run four times per element
+	 * per frame and repeat two divisions and a chain of option lookups each time for an answer that only
+	 * changes when the window or the gui resolution does.
+	 */
+	private static void refreshPixelsPerGuiUnit() {
 		if(window == null) {
-			return 0.0;
+			pixelsPerGuiUnitX = 0.0;
+			pixelsPerGuiUnitY = 0.0;
+			return;
 		}
-		final int guiScale = window.getGuiScale();
-		if(guiScale <= 0 || window.getHeight() <= 0) {
-			return 0.0;
+
+		final int viewportWidth = window.getWidth();
+		final int viewportHeight = window.getHeight();
+		final int guiScale = getRealGuiScale(0);
+		final boolean suspended = isGuiResolutionSuspended();
+
+		if(viewportWidth == pixelsPerGuiUnitForWidth && viewportHeight == pixelsPerGuiUnitForHeight
+				&& guiScale == pixelsPerGuiUnitForScale
+				&& guiResolutionGeneration == pixelsPerGuiUnitForGeneration
+				&& suspended == pixelsPerGuiUnitSuspended) {
+			return;
 		}
-		final double extent = getGuiExtentHeight(window.getWidth(), window.getHeight(), guiScale);
-		return extent <= 0.0 ? 0.0 : window.getHeight() / extent;
+
+		pixelsPerGuiUnitForWidth = viewportWidth;
+		pixelsPerGuiUnitForHeight = viewportHeight;
+		pixelsPerGuiUnitForScale = guiScale;
+		pixelsPerGuiUnitForGeneration = guiResolutionGeneration;
+		pixelsPerGuiUnitSuspended = suspended;
+
+		if(guiScale <= 0 || viewportWidth <= 0 || viewportHeight <= 0) {
+			pixelsPerGuiUnitX = 0.0;
+			pixelsPerGuiUnitY = 0.0;
+			return;
+		}
+
+		final double extentWidth = getGuiExtentWidth(viewportWidth, viewportHeight, guiScale);
+		final double extentHeight = getGuiExtentHeight(viewportWidth, viewportHeight, guiScale);
+
+		pixelsPerGuiUnitX = extentWidth <= 0.0 ? 0.0 : viewportWidth / extentWidth;
+		pixelsPerGuiUnitY = extentHeight <= 0.0 ? 0.0 : viewportHeight / extentHeight;
 	}
 
 	/**
-	 * The gui scale the window really has, for undoing the enlarged one where it is not wanted.
+	 * The gui scale the gui was actually laid out with.
 	 *
-	 * The enlarged scale is put on the window state for the length of the passes that build the
-	 * textures item icons and picture in picture elements are drawn from, so that everything reached
-	 * from them agrees on one number. Anything that has to opt back out asks for this.
+	 * Read from the field rather than through {@code getGuiScale}, because that getter does not always
+	 * answer with it: this mod enlarges it while a picture in picture renderer is measuring its own
+	 * content, and other mods hook it too. Everything here that turns a gui unit into pixels has to agree
+	 * with the number the coordinate space was built from, which is the field.
 	 */
 	public static int getRealGuiScale(int fallback) {
-		return window == null ? fallback : window.getGuiScale();
+		return window == null ? fallback : ((WindowAccess)(Object) window).getGuiScaleField();
 	}
 
 	/**

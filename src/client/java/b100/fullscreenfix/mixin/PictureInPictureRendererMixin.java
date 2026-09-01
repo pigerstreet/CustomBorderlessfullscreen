@@ -107,6 +107,19 @@ public class PictureInPictureRendererMixin {
 		return Math.max(1, (int) Math.round(guiUnits * pixelsPerUnit));
 	}
 
+	private static final int ORIGIN_UNKNOWN = 0;
+	private static final int ORIGIN_ANOTHER_MOD = 1;
+	private static final int ORIGIN_GAME = 2;
+
+	/**
+	 * Whether the renderer this is attached to came with the game.
+	 *
+	 * A renderer never changes class, so this is worked out once rather than on every element it draws.
+	 * The three injectors above each ask, so at three lookups per element per frame the string work
+	 * behind the answer was being repeated for nothing.
+	 */
+	private int guiResolutionOrigin = ORIGIN_UNKNOWN;
+
 	/**
 	 * Whether this renderer is one the game did not come with, and so one whose idea of how big its own
 	 * content is has to be corrected rather than trusted.
@@ -115,13 +128,22 @@ public class PictureInPictureRendererMixin {
 		if(FullscreenFix.getActiveGuiResolution() == null) {
 			return false;
 		}
-		if(PictureInPictureScale.derivesSizeFromGuiScale(getClass())) {
-			// It measures itself against the gui scale, so it is consistent only with a texture measured
-			// the same way, which is what leaving it alone gives it
+
+		if(guiResolutionOrigin == ORIGIN_UNKNOWN) {
+			final String name = getClass().getName();
+			// Mixin renames the target class, so the package identifies it rather than the name
+			final boolean fromAnotherMod = !name.startsWith("net.minecraft.") && !name.startsWith("com.mojang.");
+			guiResolutionOrigin = fromAnotherMod ? ORIGIN_ANOTHER_MOD : ORIGIN_GAME;
+		}
+
+		if(guiResolutionOrigin == ORIGIN_GAME) {
+			// Asked first, so the game's own renderers never reach the lookup below
 			return false;
 		}
-		final String name = getClass().getName();
-		// Mixin renames the target class, so the package identifies it rather than the name
-		return !name.startsWith("net.minecraft.") && !name.startsWith("com.mojang.");
+
+		// It measures itself against the gui scale, so it is consistent only with a texture measured the
+		// same way, which is what leaving it alone gives it. This one is learned while the game runs and
+		// so cannot be settled once like the origin above.
+		return !PictureInPictureScale.derivesSizeFromGuiScale(getClass());
 	}
 }

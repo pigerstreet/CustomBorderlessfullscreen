@@ -65,6 +65,11 @@ public class GuiRendererMixin {
 	 * This runs for every frame, so nothing is built until one of the values has actually changed.
 	 */
 	private void logProjection(WindowRenderState window, float extentWidth, float extentHeight) {
+		if(!FullscreenFix.LOG_COORDINATES.getBoolean()) {
+			// The message below is built before anything gets to decide not to print it
+			return;
+		}
+
 		if(extentWidth == loggedExtentWidth && extentHeight == loggedExtentHeight
 				&& window.width == loggedViewportWidth && window.height == loggedViewportHeight) {
 			return;

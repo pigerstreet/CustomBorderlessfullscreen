@@ -149,6 +149,11 @@ public abstract class WindowMixin {
 	 * something has actually changed.
 	 */
 	private void logCoordinateState() {
+		if(!FullscreenFix.LOG_COORDINATES.getBoolean()) {
+			// Everything below builds a message before anything gets to decide not to print it
+			return;
+		}
+
 		if(framebufferWidth == loggedFramebufferWidth
 				&& framebufferHeight == loggedFramebufferHeight
 				&& width == loggedWidth

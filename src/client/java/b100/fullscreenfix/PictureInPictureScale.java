@@ -28,12 +28,23 @@ public class PictureInPictureScale {
 
 	private static Class<?> renderingToTexture = null;
 
+	/**
+	 * Whether the renderer currently drawing has already been recorded during this pass.
+	 *
+	 * The gui scale getter this feeds is one of the most called methods in the game, and a renderer that
+	 * reads it does so once per thing it draws, so recording it every time would put a hash lookup and an
+	 * insert on that path for no gain. The first read in a pass says everything the rest would.
+	 */
+	private static boolean recordedThisPass = false;
+
 	public static void beginRenderToTexture(Class<?> renderer) {
 		renderingToTexture = renderer;
+		recordedThisPass = false;
 	}
 
 	public static void endRenderToTexture() {
 		renderingToTexture = null;
+		recordedThisPass = false;
 	}
 
 	/**
@@ -47,7 +58,10 @@ public class PictureInPictureScale {
 		if(renderer == null) {
 			return false;
 		}
-		derivesSizeFromGuiScale.add(renderer);
+		if(!recordedThisPass) {
+			recordedThisPass = true;
+			derivesSizeFromGuiScale.add(renderer);
+		}
 		return true;
 	}
 
