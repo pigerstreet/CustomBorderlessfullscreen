@@ -344,7 +344,7 @@ public class FullscreenFix {
 	}
 
 	private static double getGuiCursorScaleX() {
-		if(window == null) {
+		if(window == null || !GUI_CURSOR_SPACE.getBoolean()) {
 			return 1.0;
 		}
 		final int screenWidth = window.getScreenWidth();
@@ -355,7 +355,7 @@ public class FullscreenFix {
 	}
 
 	private static double getGuiCursorScaleY() {
-		if(window == null) {
+		if(window == null || !GUI_CURSOR_SPACE.getBoolean()) {
 			return 1.0;
 		}
 		final int screenHeight = window.getScreenHeight();
@@ -415,10 +415,14 @@ public class FullscreenFix {
 	 * window of this size end up in the same places again without having to upscale the whole frame.
 	 */
 	public static RenderResolution getActiveGuiResolution() {
-		if(isGuiResolutionSuspended()) {
+		// Asking whether the gui resolution is suspended reaches the current screen, and this is called
+		// from the hottest paths in the mod, so the option itself is checked first: without one set
+		// there is nothing to suspend and the answer is null either way
+		final RenderResolution resolution = GUI_RESOLUTION.get();
+		if(resolution == null || isGuiResolutionSuspended()) {
 			return null;
 		}
-		return GUI_RESOLUTION.get();
+		return resolution;
 	}
 
 	/**
@@ -513,12 +517,30 @@ public class FullscreenFix {
 	 * they are the one part of the gui that ends up blurry.
 	 */
 	public static int getEffectiveGuiScale(int viewportWidth, int viewportHeight, int guiScale) {
-		if(getActiveGuiResolution() == null || guiScale <= 0) {
+		return getEffectiveGuiScale(getActiveGuiResolution(), viewportWidth, viewportHeight, guiScale);
+	}
+
+	/**
+	 * The scale the item atlas is built at.
+	 *
+	 * Changing this rebuilds the whole atlas, so it deliberately ignores the gui resolution being
+	 * suspended. With HUD Only on, suspension flips every time a screen is opened or closed, and
+	 * following it would throw the atlas away and re-render every item on both edges of every menu
+	 * that gets opened. Holding it at the scale the hud asks for costs a little video memory while a
+	 * screen is open, where the icons are then drawn slightly smaller than they were rendered, which
+	 * is the harmless direction.
+	 */
+	public static int getItemAtlasGuiScale(int viewportWidth, int viewportHeight, int guiScale) {
+		return getEffectiveGuiScale(GUI_RESOLUTION.get(), viewportWidth, viewportHeight, guiScale);
+	}
+
+	public static int getEffectiveGuiScale(RenderResolution resolution, int viewportWidth, int viewportHeight, int guiScale) {
+		if(resolution == null || guiScale <= 0) {
 			return guiScale;
 		}
 
-		final double extentWidth = getGuiExtentWidth(viewportWidth, viewportHeight, guiScale);
-		final double extentHeight = getGuiExtentHeight(viewportWidth, viewportHeight, guiScale);
+		final double extentWidth = getGuiExtentWidth(resolution, viewportWidth, viewportHeight, guiScale);
+		final double extentHeight = getGuiExtentHeight(resolution, viewportWidth, viewportHeight, guiScale);
 		if(extentWidth <= 0.0 || extentHeight <= 0.0) {
 			return guiScale;
 		}
@@ -667,6 +689,14 @@ public class FullscreenFix {
 	
 	////////////////////////////////////
 	
+	/**
+	 * Whether the coordinate log is being written, for callers that would otherwise build a message
+	 * only to have it thrown away. The ones that do this run once per frame.
+	 */
+	public static boolean isLoggingCoordinates() {
+		return LOG_COORDINATES.getBoolean();
+	}
+
 	/**
 	 * Reports the sizes the game is working with. Off by default: it is only of interest when the gui
 	 * or the cursor ends up somewhere unexpected, and that is the one thing about this mod that cannot

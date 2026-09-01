@@ -1,6 +1,7 @@
 package b100.fullscreenfix.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
@@ -31,6 +32,12 @@ import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;
 @Mixin(value = PictureInPictureRenderer.class)
 public class PictureInPictureRendererMixin {
 
+	/**
+	 * Whether this renderer came from another mod, once it has been worked out. Null until then.
+	 */
+	@Unique
+	private Boolean foreignRenderer;
+
 	@ModifyVariable(method = "prepare", at = @At("STORE"), index = 4)
 	private int guiResolutionTextureWidth(int textureWidth, PictureInPictureRenderState state, GuiRenderState guiRenderState, int guiScale) {
 		if(!sizesItsOwnContent()) {
@@ -47,6 +54,7 @@ public class PictureInPictureRendererMixin {
 		return toPixels(state.y1() - state.y0(), FullscreenFix.getPixelsPerGuiUnitY(), textureHeight);
 	}
 
+	@Unique
 	private static int toPixels(int guiUnits, double pixelsPerUnit, int fallback) {
 		if(guiUnits <= 0 || pixelsPerUnit <= 0.0) {
 			return fallback;
@@ -59,12 +67,26 @@ public class PictureInPictureRendererMixin {
 	 * pose it is handed. Everything that did not come with the game is treated as though it does,
 	 * because the texture then matches the screen exactly and that is what such a renderer assumes.
 	 */
+	@Unique
 	private boolean sizesItsOwnContent() {
 		if(FullscreenFix.getActiveGuiResolution() == null) {
 			return false;
 		}
-		final String name = getClass().getName();
-		// Mixin renames the target class, so the package identifies it rather than the name
-		return !name.startsWith("net.minecraft.") && !name.startsWith("com.mojang.");
+		return isForeignRenderer();
+	}
+
+	/**
+	 * Whether this renderer came from another mod. The answer is a property of the class and can
+	 * never change, while the question is asked twice for every picture in picture element in every
+	 * frame, so it is worked out once and kept.
+	 */
+	@Unique
+	private boolean isForeignRenderer() {
+		if(foreignRenderer == null) {
+			final String name = getClass().getName();
+			// Mixin renames the target class, so the package identifies it rather than the name
+			foreignRenderer = !name.startsWith("net.minecraft.") && !name.startsWith("com.mojang.");
+		}
+		return foreignRenderer;
 	}
 }

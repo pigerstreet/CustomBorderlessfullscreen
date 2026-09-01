@@ -9,6 +9,7 @@ import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -57,20 +58,31 @@ public abstract class WindowMixin {
 	@Final
 	private WindowEventHandler eventHandler;
 
+	@Unique
 	private boolean wasFullscreen = false;
+	@Unique
 	private boolean initialized = false;
-	
+
+	@Unique
 	private boolean fullscreenModeHasChanged = false;
+	@Unique
 	private com.mojang.blaze3d.platform.VideoMode newFullscreenMode;
 
+	@Unique
 	private boolean isMaximized = false;
-	
+
+	@Unique
 	private int windowPosX;
+	@Unique
 	private int windowPosY;
+	@Unique
 	private int windowWidth;
+	@Unique
 	private int windowHeight;
+	@Unique
 	private boolean windowMaximized;
-	
+
+	@Unique
 	private boolean firstUpdate = true;
 	
 	@Inject(method = "createGlfwWindow", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/GpuBackend;setWindowHints()V", ordinal = 0))
@@ -130,14 +142,23 @@ public abstract class WindowMixin {
 		logCoordinateState();
 	}
 
+	@Unique
 	private int loggedFramebufferWidth = -1;
+	@Unique
 	private int loggedFramebufferHeight = -1;
+	@Unique
 	private int loggedWidth = -1;
+	@Unique
 	private int loggedHeight = -1;
+	@Unique
 	private int loggedRealFramebufferWidth = -1;
+	@Unique
 	private int loggedRealFramebufferHeight = -1;
+	@Unique
 	private int loggedRealScreenWidth = -1;
+	@Unique
 	private int loggedRealScreenHeight = -1;
+	@Unique
 	private int loggedGuiScale = -1;
 
 	/**
@@ -147,7 +168,12 @@ public abstract class WindowMixin {
 	 * This runs every frame, so it compares the values themselves and only builds a message once
 	 * something has actually changed.
 	 */
+	@Unique
 	private void logCoordinateState() {
+		if(!FullscreenFix.isLoggingCoordinates()) {
+			return;
+		}
+
 		if(framebufferWidth == loggedFramebufferWidth
 				&& framebufferHeight == loggedFramebufferHeight
 				&& width == loggedWidth
@@ -192,6 +218,7 @@ public abstract class WindowMixin {
 	 * A small difference is normal and also present in vanilla, because the gui size is rounded up to
 	 * whole units while the projection extent is not.
 	 */
+	@Unique
 	private void logCursorAgainstDrawing() {
 		final Window window = (Window)(Object)this;
 
@@ -233,6 +260,7 @@ public abstract class WindowMixin {
 	 * A size of zero means the window is minimized and has to be passed through untouched, because
 	 * that is what vanilla uses to detect it.
 	 */
+	@Unique
 	private static int renderResolutionWidth(int realWidth) {
 		RenderResolution resolution = FullscreenFix.getActiveRenderResolution();
 		if(resolution == null || realWidth == 0) {
@@ -241,6 +269,7 @@ public abstract class WindowMixin {
 		return resolution.width;
 	}
 
+	@Unique
 	private static int renderResolutionHeight(int realHeight) {
 		RenderResolution resolution = FullscreenFix.getActiveRenderResolution();
 		if(resolution == null || realHeight == 0) {
@@ -302,6 +331,7 @@ public abstract class WindowMixin {
 	 * targets in the middle of a frame is not safe, so this is only called from
 	 * {@link #onSwapBuffers}, between frames.
 	 */
+	@Unique
 	private void applyRenderResolution() {
 		final int realWidth = FullscreenFix.realFramebufferWidth;
 		final int realHeight = FullscreenFix.realFramebufferHeight;
@@ -346,12 +376,19 @@ public abstract class WindowMixin {
 		guiScaledHeight = FullscreenFix.toGuiScaledSize(FullscreenFix.getGuiExtentHeight(framebufferWidth, framebufferHeight, guiScale));
 	}
 
+	@Unique
 	private int cachedGuiSizeForWidth = -1;
+	@Unique
 	private int cachedGuiSizeForHeight = -1;
+	@Unique
 	private int cachedGuiSizeForScale = -1;
+	@Unique
 	private int cachedGuiSizeForGeneration = -1;
+	@Unique
 	private boolean cachedGuiSizeSuspended = false;
+	@Unique
 	private int cachedGuiScaledWidth = -1;
+	@Unique
 	private int cachedGuiScaledHeight = -1;
 
 	/**
@@ -388,6 +425,7 @@ public abstract class WindowMixin {
 	 * These getters are called many times per frame, so the result is kept until one of the things it
 	 * depends on changes.
 	 */
+	@Unique
 	private void refreshGuiSize() {
 		final boolean suspended = FullscreenFix.isGuiResolutionSuspended();
 
@@ -433,6 +471,7 @@ public abstract class WindowMixin {
 	 * again recomputes the coordinate space from scratch, so this also puts it back to normal when the
 	 * gui resolution is turned off.
 	 */
+	@Unique
 	private void applyGuiResolution() {
 		((Window)(Object)this).setGuiScale(guiScale);
 
@@ -462,6 +501,7 @@ public abstract class WindowMixin {
 		wasFullscreen = fullscreen;
 	}
 	
+	@Unique
 	private void updateWindowState() {
 		final boolean firstUpdate = this.firstUpdate;
 		

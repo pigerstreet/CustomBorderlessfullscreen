@@ -2,6 +2,7 @@ package b100.fullscreenfix.mixin;
 
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
@@ -51,9 +52,13 @@ public class GuiRendererMixin {
 		logProjection(window, extentWidth, extentHeight);
 	}
 
+	@Unique
 	private float loggedExtentWidth = 0.0f;
+	@Unique
 	private float loggedExtentHeight = 0.0f;
+	@Unique
 	private int loggedViewportWidth = -1;
+	@Unique
 	private int loggedViewportHeight = -1;
 
 	/**
@@ -64,7 +69,12 @@ public class GuiRendererMixin {
 	 *
 	 * This runs for every frame, so nothing is built until one of the values has actually changed.
 	 */
+	@Unique
 	private void logProjection(WindowRenderState window, float extentWidth, float extentHeight) {
+		if(!FullscreenFix.isLoggingCoordinates()) {
+			return;
+		}
+
 		if(extentWidth == loggedExtentWidth && extentHeight == loggedExtentHeight
 				&& window.width == loggedViewportWidth && window.height == loggedViewportHeight) {
 			return;
@@ -118,11 +128,17 @@ public class GuiRendererMixin {
 		args.set(3, Math.max(0, top - bottom));
 	}
 
+	@Unique
 	private double pixelsPerUnitX = 1.0;
+	@Unique
 	private double pixelsPerUnitY = 1.0;
+	@Unique
 	private int pixelsPerUnitForWidth = -1;
+	@Unique
 	private int pixelsPerUnitForHeight = -1;
+	@Unique
 	private int pixelsPerUnitForScale = -1;
+	@Unique
 	private int pixelsPerUnitForGeneration = -1;
 
 	/**
@@ -131,6 +147,7 @@ public class GuiRendererMixin {
 	 * This is read once per clipped element rather than once per frame, so it is worth not repeating
 	 * the divisions and the option lookups behind it every time.
 	 */
+	@Unique
 	private void refreshPixelsPerUnit(WindowRenderState window) {
 		if(window.width == pixelsPerUnitForWidth && window.height == pixelsPerUnitForHeight
 				&& window.guiScale == pixelsPerUnitForScale
@@ -167,17 +184,26 @@ public class GuiRendererMixin {
 	 * to get it wrong. Picture in picture renderers belonging to other mods are handled separately in
 	 * {@link PictureInPictureRendererMixin}, which is what the swap had been reaching for.
 	 */
+
+	/**
+	 * The scale the item atlas is built at.
+	 *
+	 * Changing this throws the atlas away and re-renders every item in it, so unlike the picture in
+	 * picture scale below it deliberately holds still while the gui resolution is suspended. HUD Only
+	 * suspends it every time a screen is opened and unsuspends it again when the screen closes, and
+	 * following that would pay for a full atlas rebuild on both edges of every menu the player opens.
+	 */
 	@ModifyExpressionValue(method = "getGuiScaleInvalidatingItemAtlasIfChanged", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/client/renderer/state/WindowRenderState;guiScale:I"))
 	private int guiResolutionItemAtlasScale(int guiScale) {
-		return effectiveGuiScale(guiScale);
+		final WindowRenderState window = getWindowRenderState();
+		if(window == null || window.width <= 0 || window.height <= 0) {
+			return guiScale;
+		}
+		return FullscreenFix.getItemAtlasGuiScale(window.width, window.height, guiScale);
 	}
 
 	@ModifyExpressionValue(method = "preparePictureInPicture", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/client/renderer/state/WindowRenderState;guiScale:I"))
 	private int guiResolutionPictureInPictureScale(int guiScale) {
-		return effectiveGuiScale(guiScale);
-	}
-
-	private static int effectiveGuiScale(int guiScale) {
 		final WindowRenderState window = getWindowRenderState();
 		if(window == null || window.width <= 0 || window.height <= 0) {
 			return guiScale;
@@ -185,6 +211,7 @@ public class GuiRendererMixin {
 		return FullscreenFix.getEffectiveGuiScale(window.width, window.height, guiScale);
 	}
 
+	@Unique
 	private static WindowRenderState getWindowRenderState() {
 		final Minecraft minecraft = Minecraft.getInstance();
 		if(minecraft == null || minecraft.gameRenderer == null) {

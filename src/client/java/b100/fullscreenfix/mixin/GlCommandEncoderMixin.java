@@ -3,6 +3,7 @@ package b100.fullscreenfix.mixin;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
@@ -21,7 +22,9 @@ import net.minecraft.client.Minecraft;
 @Mixin(targets = "com.mojang.blaze3d.opengl.GlCommandEncoder")
 public class GlCommandEncoderMixin {
 
+	@Unique
 	private static final int GL_NEAREST = 0x2600;
+	@Unique
 	private static final int GL_LINEAR = 0x2601;
 
 	/**
@@ -99,6 +102,7 @@ public class GlCommandEncoderMixin {
 		GlStateManager._clear(GL11.GL_COLOR_BUFFER_BIT);
 	}
 
+	@Unique
 	private static boolean isMainRenderTarget(GpuTextureView textureView) {
 		final Minecraft minecraft = Minecraft.getInstance();
 		if(minecraft == null) {

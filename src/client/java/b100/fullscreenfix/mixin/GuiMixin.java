@@ -1,6 +1,7 @@
 package b100.fullscreenfix.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -28,9 +29,20 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 @Mixin(value = Gui.class)
 public class GuiMixin {
 
+	/**
+	 * Whether the matrix pushed at the head of the current call still has to be popped.
+	 *
+	 * The decision is taken once and remembered rather than being worked out again at the return,
+	 * so that the two can never disagree and leave the matrix stack unbalanced, which would offset
+	 * everything drawn after the crosshair for the rest of the frame.
+	 */
+	@Unique
+	private boolean crosshairMatrixPushed = false;
+
 	@Inject(method = "extractCrosshair", at = @At("HEAD"))
 	private void guiResolutionUnstretchCrosshair(GuiGraphicsExtractor extractor, DeltaTracker deltaTracker, CallbackInfo ci) {
-		if(!shouldUnstretch()) {
+		crosshairMatrixPushed = shouldUnstretch();
+		if(!crosshairMatrixPushed) {
 			return;
 		}
 
@@ -52,9 +64,10 @@ public class GuiMixin {
 	 */
 	@Inject(method = "extractCrosshair", at = @At("RETURN"))
 	private void guiResolutionRestoreAfterCrosshair(GuiGraphicsExtractor extractor, DeltaTracker deltaTracker, CallbackInfo ci) {
-		if(!shouldUnstretch()) {
+		if(!crosshairMatrixPushed) {
 			return;
 		}
+		crosshairMatrixPushed = false;
 		extractor.pose().popMatrix();
 	}
 
@@ -62,6 +75,7 @@ public class GuiMixin {
 	 * The factor that takes a gui unit back to being the gui scale across, which is what it would be
 	 * without a gui resolution. One when the axis is already that, so nothing is done needlessly.
 	 */
+	@Unique
 	private static double counterScale(double pixelsPerGuiUnit) {
 		if(pixelsPerGuiUnit <= 0.0) {
 			return 1.0;
@@ -70,6 +84,7 @@ public class GuiMixin {
 		return guiScale <= 0 ? 1.0 : guiScale / pixelsPerGuiUnit;
 	}
 
+	@Unique
 	private static boolean shouldUnstretch() {
 		return FullscreenFix.NORMAL_CROSSHAIR.getBoolean() && FullscreenFix.getActiveGuiResolution() != null;
 	}
