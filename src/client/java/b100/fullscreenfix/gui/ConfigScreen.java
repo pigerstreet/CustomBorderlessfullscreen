@@ -8,6 +8,7 @@ import b100.lib.client.gui.config.SaveConfigButton;
 import b100.lib.client.gui.config.base.ConfigElement;
 import b100.lib.client.gui.config.element.BooleanToggleElement;
 import b100.lib.client.gui.config.element.CustomOptionElement;
+import b100.lib.client.gui.config.element.EnumToggleElement;
 import b100.lib.client.gui.element.GuiButton;
 import b100.lib.client.gui.element.GuiContainer;
 import b100.lib.client.gui.element.GuiElement;
@@ -76,6 +77,9 @@ public class ConfigScreen extends GuiScrollListScreen {
 			scrollList.add(BooleanToggleElement.create(this, "option.guiResolutionCursorSpace", FullscreenFix.GUI_CURSOR_SPACE, UpdateMode.ON_SAVE));
 			scrollList.add(BooleanToggleElement.create(this, "option.guiResolutionNormalCrosshair", FullscreenFix.NORMAL_CROSSHAIR, UpdateMode.ON_SAVE));
 			scrollList.add(BooleanToggleElement.create(this, "option.crosshairOnTop", FullscreenFix.CROSSHAIR_ON_TOP, UpdateMode.ON_SAVE));
+			scrollList.add(BooleanToggleElement.create(this, "option.crosshairFixedColor", FullscreenFix.CROSSHAIR_FIXED_COLOR, UpdateMode.ON_SAVE));
+			scrollList.add(EnumToggleElement.create(this, "option.crosshairColor", FullscreenFix.CROSSHAIR_COLOR, UpdateMode.ON_SAVE)
+					.setToTextFunction((color) -> FullscreenFix.TRANS.asText("value.crosshairColor." + color.name().toLowerCase())));
 
 			scrollList.add(BooleanToggleElement.create(this, "option.replaceVideoSettings", FullscreenFix.REPLACE_VIDEO_SETTINGS_BUTTON, UpdateMode.ON_SAVE));
 			scrollList.add(BooleanToggleElement.create(this, "option.configScreenHotkeyEnabled", FullscreenFix.CONFIG_SCREEN_HOTKEY_ENABLED, UpdateMode.ON_SAVE));

@@ -18,6 +18,7 @@ import b100.lib.client.mixin.IScreen;
 import b100.lib.config.properties.PropertiesFile;
 import b100.lib.config.property.BooleanProperty;
 import b100.lib.config.property.BooleanPropertyImpl;
+import b100.lib.config.property.EnumProperty;
 import b100.lib.config.property.Property;
 import b100.lib.translate.Translations;
 import net.minecraft.client.Minecraft;
@@ -174,6 +175,21 @@ public class FullscreenFix {
 	 */
 	public static final BooleanProperty CROSSHAIR_ON_TOP = new BooleanPropertyImpl(true);
 
+	/**
+	 * Whether the crosshair is drawn in a colour of its own rather than by inverting the background.
+	 *
+	 * The sprite it is drawn from is pure white and the inverting blend is what gives it a colour, so
+	 * a background that is close to mid grey inverts to something close to mid grey and the crosshair
+	 * disappears into it. Drawing it in a fixed colour instead reads the same way on every background,
+	 * at the cost of disappearing into one that happens to match it.
+	 */
+	public static final BooleanProperty CROSSHAIR_FIXED_COLOR = new BooleanPropertyImpl(true);
+
+	/**
+	 * The colour used for that. Only read while it is turned on.
+	 */
+	public static final EnumProperty<CrosshairColor> CROSSHAIR_COLOR = EnumProperty.create(CrosshairColor.class, CrosshairColor.WHITE);
+
 	private static void guiResolutionChanged() {
 		guiResolutionNeedsUpdate = true;
 		guiResolutionGeneration++;
@@ -201,6 +217,8 @@ public class FullscreenFix {
 		CONFIG.add("guiResolutionCursorSpace", GUI_CURSOR_SPACE);
 		CONFIG.add("guiResolutionNormalCrosshair", NORMAL_CROSSHAIR);
 		CONFIG.add("crosshairOnTop", CROSSHAIR_ON_TOP);
+		CONFIG.add("crosshairFixedColor", CROSSHAIR_FIXED_COLOR);
+		CONFIG.add("crosshairColor", CROSSHAIR_COLOR);
 		CONFIG.add("logCoordinates", LOG_COORDINATES);
 		CONFIG.load();
 	}

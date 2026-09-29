@@ -5,11 +5,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+
 import b100.fullscreenfix.CrosshairOnTop;
 import b100.fullscreenfix.FullscreenFix;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
 
 /**
  * Draws the crosshair as though there were no gui resolution.
@@ -55,6 +61,27 @@ public class GuiMixin {
 		extractor.pose().translate(centreX, centreY);
 		extractor.pose().scale(scaleX, scaleY);
 		extractor.pose().translate(-centreX, -centreY);
+	}
+
+	/**
+	 * Draws the crosshair in a fixed colour instead of by inverting what is behind it.
+	 *
+	 * The sprite is pure white, and the inverting blend is what colours it, which means a background
+	 * close to mid grey inverts to something close to mid grey and the crosshair vanishes into it.
+	 * Drawing that same sprite with an ordinary textured blend and a colour of its own makes it read
+	 * the same way on every background.
+	 *
+	 * Only the crosshair itself is replaced. The attack indicator is drawn from the same pipeline but
+	 * from different sprites and is left alone, so it still looks the way it does without this mod.
+	 */
+	@WrapOperation(method = "extractCrosshair", at = @At(value = "INVOKE", ordinal = 0, target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blitSprite(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIII)V"))
+	private void crosshairFixedColor(GuiGraphicsExtractor graphics, RenderPipeline pipeline, Identifier sprite, int x, int y, int width, int height, Operation<Void> original) {
+		if(!FullscreenFix.CROSSHAIR_FIXED_COLOR.getBoolean()) {
+			original.call(graphics, pipeline, sprite, x, y, width, height);
+			return;
+		}
+
+		graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, width, height, FullscreenFix.CROSSHAIR_COLOR.get().argb);
 	}
 
 	/**
