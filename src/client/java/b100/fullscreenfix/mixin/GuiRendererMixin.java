@@ -2,13 +2,17 @@ package b100.fullscreenfix.mixin;
 
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
 
+import b100.fullscreenfix.CrosshairOnTop;
 import b100.fullscreenfix.FullscreenFix;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
@@ -25,6 +29,21 @@ import net.minecraft.client.renderer.state.WindowRenderState;
  */
 @Mixin(value = GuiRenderer.class)
 public class GuiRendererMixin {
+
+	/**
+	 * Draws the crosshair now that everything else is on the hud.
+	 *
+	 * The hud is built during the extraction pass, which the game has finished by the time a frame is
+	 * rendered, including the parts of it that belong to other mods and anything a screen or an overlay
+	 * added afterwards. So this is the first point at which the crosshair is known to be the last thing
+	 * added, and nothing can cover it.
+	 *
+	 * See {@link b100.fullscreenfix.CrosshairOnTop}.
+	 */
+	@Inject(method = "render", at = @At("HEAD"))
+	private void drawCrosshairAboveTheHud(GpuBufferSlice fogBuffer, CallbackInfo ci) {
+		CrosshairOnTop.replay();
+	}
 
 	/**
 	 * The extent has to be derived from the same numbers as {@link WindowMixin#onSetGuiScale}, because

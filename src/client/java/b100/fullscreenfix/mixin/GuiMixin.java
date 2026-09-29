@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import b100.fullscreenfix.CrosshairOnTop;
 import b100.fullscreenfix.FullscreenFix;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.Gui;
@@ -28,8 +29,18 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 @Mixin(value = Gui.class)
 public class GuiMixin {
 
-	@Inject(method = "extractCrosshair", at = @At("HEAD"))
+	@Inject(method = "extractCrosshair", at = @At("HEAD"), cancellable = true)
 	private void guiResolutionUnstretchCrosshair(GuiGraphicsExtractor extractor, DeltaTracker deltaTracker, CallbackInfo ci) {
+		if(CrosshairOnTop.shouldDefer()) {
+			// Held back and drawn again once the rest of the hud has been added, so that nothing
+			// another mod places over the middle of the screen can cover it. The scaling below is not
+			// applied here, it is applied on that second pass instead, where the same code runs it
+			// with the stack still balanced
+			CrosshairOnTop.defer(extractor, deltaTracker);
+			ci.cancel();
+			return;
+		}
+
 		if(!shouldUnstretch()) {
 			return;
 		}

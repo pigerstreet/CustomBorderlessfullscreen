@@ -4,6 +4,7 @@
 	"plugin": "b100.fullscreenfix.MixinPlugin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
+		"access.GuiAccess",
 		"access.WindowAccess",
 		"GlCommandEncoderMixin",
 		"GuiMixin",

@@ -161,6 +161,19 @@ public class FullscreenFix {
 	 */
 	public static final BooleanProperty NORMAL_CROSSHAIR = new BooleanPropertyImpl(true);
 
+	/**
+	 * Whether the crosshair is drawn after the whole hud, so that nothing can cover it.
+	 *
+	 * Vanilla draws the crosshair early and then starts a new layer for the rest of the hud, so any
+	 * element added afterwards that reaches the middle of the screen is drawn over it. A hud with a
+	 * mod's overlay arranged where the crosshair is hides it completely, and which element covers it
+	 * is not something this mod can correct any other way.
+	 *
+	 * Drawing it once the hud is finished puts it in the last layer of the frame instead. A screen is
+	 * drawn after the hud and is meant to cover it, so while one is open nothing changes.
+	 */
+	public static final BooleanProperty CROSSHAIR_ON_TOP = new BooleanPropertyImpl(true);
+
 	private static void guiResolutionChanged() {
 		guiResolutionNeedsUpdate = true;
 		guiResolutionGeneration++;
@@ -187,6 +200,7 @@ public class FullscreenFix {
 		CONFIG.add("guiResolutionHudOnly", GUI_HUD_ONLY);
 		CONFIG.add("guiResolutionCursorSpace", GUI_CURSOR_SPACE);
 		CONFIG.add("guiResolutionNormalCrosshair", NORMAL_CROSSHAIR);
+		CONFIG.add("crosshairOnTop", CROSSHAIR_ON_TOP);
 		CONFIG.add("logCoordinates", LOG_COORDINATES);
 		CONFIG.load();
 	}
