@@ -12,7 +12,7 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import b100.fullscreenfix.CrosshairOnTop;
 import b100.fullscreenfix.FullscreenFix;
 import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.Hud;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
@@ -32,8 +32,8 @@ import net.minecraft.resources.Identifier;
  * The attack indicator is drawn by the same method and goes with it, which is what is wanted, as it
  * sits directly under the crosshair and would otherwise no longer match it.
  */
-@Mixin(value = Gui.class)
-public class GuiMixin {
+@Mixin(value = Hud.class)
+public class HudMixin {
 
 	@Inject(method = "extractCrosshair", at = @At("HEAD"), cancellable = true)
 	private void guiResolutionUnstretchCrosshair(GuiGraphicsExtractor extractor, DeltaTracker deltaTracker, CallbackInfo ci) {

@@ -50,8 +50,6 @@ public abstract class WindowMixin {
 	@Shadow
 	private int guiScaledHeight;
 	@Shadow
-	private boolean isResized;
-	@Shadow
 	@Final
 	private WindowEventHandler eventHandler;
 
@@ -282,6 +280,20 @@ public abstract class WindowMixin {
 		return renderResolutionHeight(realHeight);
 	}
 
+	/**
+	 * Vanilla makes its own non exclusive fullscreen one pixel shorter than the window, so that Windows
+	 * does not decide the window is covering the screen and promote it to exclusive fullscreen.
+	 *
+	 * Fullscreen is this mod's own here, and the window and the framebuffer are meant to agree exactly:
+	 * the render resolution, the size the frame is presented at and the gui all measure themselves
+	 * against the real framebuffer size, and with the pixel taken off in some places and not in others
+	 * they disagree by one row.
+	 */
+	@ModifyReturnValue(method = "isSoftScreen", at = @At("RETURN"))
+	private boolean noSoftScreenPixelAdjustment(boolean softScreen) {
+		return false;
+	}
+
 	@Inject(method = "refreshFramebufferSize", at = @At("TAIL"))
 	private void onRefreshFramebufferSize(CallbackInfo ci) {
 		FullscreenFix.realFramebufferWidth = framebufferWidth;
@@ -326,9 +338,8 @@ public abstract class WindowMixin {
 		framebufferWidth = newWidth;
 		framebufferHeight = newHeight;
 
-		// Makes the game renderer resize the main render target on the next frame
-		isResized = true;
-
+		// The game renderer resizes the main render target on its own next frame, because it compares the
+		// window size it is handed every frame with the size of the target
 		eventHandler.resizeGui();
 	}
 	

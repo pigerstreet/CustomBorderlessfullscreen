@@ -54,13 +54,19 @@ public class GlCommandEncoderMixin {
 			return;
 		}
 
-		final int sourceWidth = args.get(4);
-		final int sourceHeight = args.get(5);
+		// Vanilla copies at most as much as the swapchain is large, and the swapchain is the real window.
+		// A render resolution above the window would therefore only blit a corner of the frame, so the
+		// source is always the whole render target.
+		final int sourceWidth = textureView.getWidth(0);
+		final int sourceHeight = textureView.getHeight(0);
 
 		if(sourceWidth == windowWidth && sourceHeight == windowHeight) {
 			// Nothing to scale, leave the nearest neighbour blit alone
 			return;
 		}
+
+		args.set(4, sourceWidth);
+		args.set(5, sourceHeight);
 
 		// Stretching covers the whole window, keeping the aspect ratio covers a centred part of it
 		final int targetWidth = (int) Math.round(FullscreenFix.getPresentFractionWidth() * windowWidth);
@@ -82,7 +88,7 @@ public class GlCommandEncoderMixin {
 	 * the bars left by keeping the aspect ratio have to be cleared to black first.
 	 */
 	@Inject(method = "presentTexture", at = @At("HEAD"))
-	private void clearBorderAroundFrame(GpuTextureView textureView, CallbackInfo ci) {
+	private void clearBorderAroundFrame(GpuTextureView textureView, int swapchainWidth, int swapchainHeight, CallbackInfo ci) {
 		if(FullscreenFix.getActiveRenderResolution() == null) {
 			return;
 		}
@@ -105,7 +111,7 @@ public class GlCommandEncoderMixin {
 			return false;
 		}
 
-		final RenderTarget mainRenderTarget = minecraft.getMainRenderTarget();
+		final RenderTarget mainRenderTarget = minecraft.gameRenderer.mainRenderTarget();
 		if(mainRenderTarget == null) {
 			return false;
 		}

@@ -4,11 +4,11 @@
 	"plugin": "b100.fullscreenfix.MixinPlugin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
-		"access.GuiAccess",
+		"access.HudAccess",
 		"access.WindowAccess",
 		"GlCommandEncoderMixin",
-		"GuiMixin",
 		"GuiRendererMixin",
+		"HudMixin",
 		"InputUtilMixin",
 		"MinecraftMixin",
 		"MouseHandlerMixin",

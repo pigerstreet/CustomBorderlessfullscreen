@@ -1,6 +1,6 @@
 package b100.fullscreenfix;
 
-import b100.fullscreenfix.mixin.access.GuiAccess;
+import b100.fullscreenfix.mixin.access.HudAccess;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -58,7 +58,7 @@ public class CrosshairOnTop {
 		if(minecraft == null) {
 			return false;
 		}
-		return minecraft.screen == null || minecraft.screen.isInGameUi();
+		return minecraft.gui.screen() == null || minecraft.gui.screen().isInGameUi();
 	}
 
 	public static void defer(GuiGraphicsExtractor extractor, DeltaTracker deltaTracker) {
@@ -106,7 +106,7 @@ public class CrosshairOnTop {
 		try {
 			// The game's own method, which starts a layer of its own before drawing, so the crosshair
 			// ends up in the last one
-			((GuiAccess) minecraft.gui).invokeExtractCrosshair(extractor, deltaTracker);
+			((HudAccess) minecraft.gui.hud).invokeExtractCrosshair(extractor, deltaTracker);
 		}finally {
 			replaying = false;
 		}

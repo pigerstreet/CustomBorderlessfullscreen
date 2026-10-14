@@ -13,6 +13,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import b100.fullscreenfix.FullscreenFix;
 import b100.fullscreenfix.PictureInPictureScale;
 import net.minecraft.client.gui.render.pip.PictureInPictureRenderer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;
 
@@ -44,16 +46,16 @@ import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;
 @Mixin(value = PictureInPictureRenderer.class)
 public class PictureInPictureRendererMixin {
 
-	@ModifyVariable(method = "prepare", at = @At("STORE"), index = 4)
-	private int guiResolutionTextureWidth(int textureWidth, PictureInPictureRenderState state, GuiRenderState guiRenderState, int guiScale) {
+	@ModifyVariable(method = "prepare", at = @At("STORE"), index = 5)
+	private int guiResolutionTextureWidth(int textureWidth, PictureInPictureRenderState state, GuiRenderState guiRenderState, FeatureRenderDispatcher featureRenderDispatcher, int guiScale) {
 		if(!sizesItsOwnContent()) {
 			return textureWidth;
 		}
 		return toPixels(state.x1() - state.x0(), FullscreenFix.getPixelsPerGuiUnitX(), textureWidth);
 	}
 
-	@ModifyVariable(method = "prepare", at = @At("STORE"), index = 5)
-	private int guiResolutionTextureHeight(int textureHeight, PictureInPictureRenderState state, GuiRenderState guiRenderState, int guiScale) {
+	@ModifyVariable(method = "prepare", at = @At("STORE"), index = 6)
+	private int guiResolutionTextureHeight(int textureHeight, PictureInPictureRenderState state, GuiRenderState guiRenderState, FeatureRenderDispatcher featureRenderDispatcher, int guiScale) {
 		if(!sizesItsOwnContent()) {
 			return textureHeight;
 		}
@@ -70,7 +72,7 @@ public class PictureInPictureRendererMixin {
 	 * depth is the one thing here that could clip.
 	 */
 	@ModifyArgs(method = "prepare", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;scale(FFF)V"))
-	private void guiResolutionPoseScale(Args args, PictureInPictureRenderState state, GuiRenderState guiRenderState, int guiScale) {
+	private void guiResolutionPoseScale(Args args, PictureInPictureRenderState state, GuiRenderState guiRenderState, FeatureRenderDispatcher featureRenderDispatcher, int guiScale) {
 		if(!sizesItsOwnContent()) {
 			return;
 		}
@@ -90,11 +92,11 @@ public class PictureInPictureRendererMixin {
 	 * Watches a renderer draw, so that one which measures its own content against the gui scale can be
 	 * recognised and then sized the way it expects. See {@link PictureInPictureScale}.
 	 */
-	@WrapOperation(method = "prepare", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/pip/PictureInPictureRenderer;renderToTexture(Lnet/minecraft/client/renderer/state/gui/pip/PictureInPictureRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;)V"))
-	private void guiResolutionWatchRenderToTexture(PictureInPictureRenderer<?> renderer, PictureInPictureRenderState state, PoseStack pose, Operation<Void> original) {
+	@WrapOperation(method = "prepare", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/render/pip/PictureInPictureRenderer;renderToTexture(Lnet/minecraft/client/renderer/state/gui/pip/PictureInPictureRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V"))
+	private void guiResolutionWatchRenderToTexture(PictureInPictureRenderer<?> renderer, PictureInPictureRenderState state, PoseStack pose, SubmitNodeCollector collector, Operation<Void> original) {
 		PictureInPictureScale.beginRenderToTexture(getClass());
 		try {
-			original.call(renderer, state, pose);
+			original.call(renderer, state, pose, collector);
 		}finally {
 			PictureInPictureScale.endRenderToTexture();
 		}

@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
 
 import b100.fullscreenfix.CrosshairOnTop;
 import b100.fullscreenfix.FullscreenFix;
@@ -41,7 +40,7 @@ public class GuiRendererMixin {
 	 * See {@link b100.fullscreenfix.CrosshairOnTop}.
 	 */
 	@Inject(method = "render", at = @At("HEAD"))
-	private void drawCrosshairAboveTheHud(GpuBufferSlice fogBuffer, CallbackInfo ci) {
+	private void drawCrosshairAboveTheHud(CallbackInfo ci) {
 		CrosshairOnTop.replay();
 	}
 
@@ -50,7 +49,7 @@ public class GuiRendererMixin {
 	 * gui code lays itself out against those and is drawn with this. Anything that made the two
 	 * disagree would show up as everything being offset by the difference.
 	 */
-	@ModifyArgs(method = "draw(Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/Projection;setupOrtho(FFFFZ)V"))
+	@ModifyArgs(method = "draw()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/Projection;setupOrtho(FFFFZ)V"))
 	private void useGuiResolutionForGuiProjection(Args args) {
 		if(FullscreenFix.getActiveGuiResolution() == null) {
 			return;
@@ -214,6 +213,6 @@ public class GuiRendererMixin {
 		if(minecraft == null || minecraft.gameRenderer == null) {
 			return null;
 		}
-		return minecraft.gameRenderer.getGameRenderState().windowRenderState;
+		return minecraft.gameRenderer.gameRenderState().windowRenderState;
 	}
 }
